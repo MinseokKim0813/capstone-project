@@ -29280,18 +29280,16 @@ data-command='["setEnvironment","pmatrix"]'>
         t.isSelected && (i += " ML__selected");
         let n = r.evaluate(t.args[0]);
         return new _(
-          ((o = be(n)) != null ? o : "")
-            .split("")
-            .map(
-              (a) =>
-                new _(a, {
-                  type: "ord",
-                  classes: i,
-                  mode: t.mode,
-                  isSelected: t.isSelected,
-                  style: p({ variant: "main" }, t.style),
-                })
-            ),
+          ((o = be(n)) != null ? o : "").split("").map(
+            (a) =>
+              new _(a, {
+                type: "ord",
+                classes: i,
+                mode: t.mode,
+                isSelected: t.isSelected,
+                style: p({ variant: "main" }, t.style),
+              })
+          ),
           {
             type: "lift",
             style: t.style,

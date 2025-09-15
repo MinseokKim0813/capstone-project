@@ -1,16 +1,18 @@
 // TODO:
 // 1. Disable page and separate each quiz with different version for different user
 // 2. Table formatting button (without border)
-// 4. Add superscript, subscript, Sigma, Pi
 // 6. Hide copy/paste options in the menu
 // 7. Submit button: javascript print function, and instead of printing, save as pdf and save into a google drive folder
 // then remove the saved file
-
 // 7. Write to let them know new line is mathmode + command enter for the first line
 // - Give example to let them toggle between text and math mode
 // - Check if I can make it 2 lines default so simple enter works
 // Remove all the options except inserts, color, background
 // 10. Milestone table
+
+// DONE
+// 1. fix the toggle button
+// 4. Add superscript, subscript, Sigma, Pi
 
 const { jsPDF } = window.jspdf;
 const doc = new jsPDF();
@@ -148,7 +150,6 @@ function renderInstructions() {
   `;
 
   const trialBlock = mainAppContainer.querySelector("#trial-question-block");
-  // Updated symbols to use overline for negation
   const trialSymbols = ["overline", "∨", "→"];
   const trialTargetId = "input-trial";
 
@@ -156,12 +157,9 @@ function renderInstructions() {
     symbols
       .map((symbol) => {
         const latex = latexMap[symbol] || symbol;
-        // --- MODIFICATION START ---
         let buttonText = latex;
         if (symbol === "overline") buttonText = "\\overline{\\square}";
-        // Use consistent styling with quiz buttons
         return `<math-field read-only data-target="${trialTargetId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
-        // --- MODIFICATION END ---
       })
       .join("");
 
