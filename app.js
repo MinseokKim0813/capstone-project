@@ -1,16 +1,16 @@
 // TODO:
-// 1. Disable page for now
-// 2. Submit button at the middle -- DONE
+// 1. Disable page and separate each quiz with different version for different user
 // 2. Table formatting button (without border)
 // 4. Add superscript, subscript, Sigma, Pi
-// 5. Fix toggle switch button (either make it slide or just enable/disable button -- mkae hover message as description (switching b/w math and text mode, text default))
+// 5. Fix toggle switch (just enable/disable button -- mkae hover message as description (switching b/w math and text mode, text default))
 // 6. Hide copy/paste options in the menu
+// 7. Submit button: javascript print function, and instead of printing, save as pdf and save into a google drive folder
+// then remove the saved file
 
-// 7. Write to let them know new line is command enter
+// 7. Write to let them know new line is mathmode + command enter for the first line
 // - Give example to let them toggle between text and math mode
+// - Check if I can make it 2 lines default so simple enter works
 // Remove all the options except inserts, color, background
-// 8. Try the methods myself and time it.
-// 9. Try to upload (publish) maybe on github pages and check if it works. Share the page with her.
 // 10. Milestone table
 
 const { jsPDF } = window.jspdf;
@@ -169,11 +169,10 @@ function renderInstructions() {
     </div>
     <div class="flex items-center justify-end gap-2 my-2">
       <span class="text-sm font-medium text-gray-800">Text</span>
-      <label class="inline-flex items-center cursor-pointer">
+      <label class="relative inline-flex items-center cursor-pointer">
         <input type="checkbox" data-toggle-target="${trialTargetId}" class="sr-only peer">
-        <div class="relative w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600">
-            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div>
-        </div>
+        <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+        <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5 pointer-events-none"></div>
       </label>
       <span class="text-sm font-medium text-gray-800">Math</span>
     </div>
@@ -277,9 +276,10 @@ function renderQuizPage(quizIndex) {
         )}</div></div>
         <div class="flex items-center justify-end gap-2 mb-2">
           <span class="text-sm font-medium text-gray-800">Text</span>
-          <label class="inline-flex items-center cursor-pointer">
+          <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" data-toggle-target="${blockId}" class="sr-only peer">
-            <div class="relative w-11 h-6 bg-gray-300 rounded-full transition-colors peer-checked:bg-blue-600"><div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5"></div></div>
+            <div class="w-11 h-6 bg-gray-300 rounded-full peer-checked:bg-blue-600 transition-colors"></div>
+            <div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full transition-transform peer-checked:translate-x-5 pointer-events-none"></div>
           </label>
           <span class="text-sm font-medium text-gray-800">Math</span>
         </div>
