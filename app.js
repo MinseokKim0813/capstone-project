@@ -193,6 +193,18 @@ function renderInstructions() {
     </math-field>
   `;
 
+  const trialMf = document.getElementById(trialTargetId);
+  if (trialMf) {
+    trialMf.value = "";
+
+    // MODIFICATION: Override the Enter key behavior while preserving defaults
+    trialMf.keybindings = [
+      { key: "[Enter]", command: "addRowAfter" },
+      { key: "[Return]", command: "addRowAfter" },
+      ...trialMf.keybindings,
+    ];
+  }
+
   attachEventListenersForBlock(trialTargetId);
 
   document.getElementById("start-quiz-btn").addEventListener("click", () => {
@@ -278,10 +290,7 @@ function renderQuizPage(quizIndex) {
     const block = document.createElement("div");
     block.className = "bg-white p-4 rounded shadow border border-gray-200 mb-6";
 
-    // Define which symbols go into the new operator row
     const operatorSymbolsList = ["overline", "\\sum", "\\prod", "_", "^"];
-
-    // Filter the symbols into two separate groups
     const operatorSymbols = item.symbols.filter((s) =>
       operatorSymbolsList.includes(s)
     );
@@ -297,17 +306,14 @@ function renderQuizPage(quizIndex) {
           if (symbol === "overline") buttonText = "\\overline{\\square}";
           if (symbol === "^") buttonText = "x^\\square";
           if (symbol === "_") buttonText = "x_\\square";
-          // --- MODIFICATION START ---
           if (symbol === "\\sum")
             buttonText = "\\textstyle{\\sum_{\\square}^{\\square}}";
           if (symbol === "\\prod")
             buttonText = "\\textstyle{\\prod_{\\square}^{\\square}}";
-          // --- MODIFICATION END ---
           return `<math-field read-only data-target="${blockId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
         })
         .join("");
 
-    // Create the HTML for the two separate symbol rows
     const operatorRow =
       operatorSymbols.length > 0
         ? `
@@ -354,7 +360,16 @@ function renderQuizPage(quizIndex) {
     container.appendChild(block);
 
     const inputField = document.getElementById(blockId);
-    if (inputField) inputField.value = answers[quizIndex][questionIdx] || "";
+    if (inputField) {
+      inputField.value = answers[quizIndex][questionIdx] || "";
+
+      // MODIFICATION: Override the Enter key behavior while preserving defaults
+      inputField.keybindings = [
+        { key: "[Enter]", command: "addRowAfter" },
+        { key: "[Return]", command: "addRowAfter" },
+        ...inputField.keybindings,
+      ];
+    }
 
     attachEventListenersForBlock(blockId, (value) => {
       answers[quizIndex][questionIdx] = value;
