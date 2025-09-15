@@ -214,8 +214,6 @@ function attachEventListenersForBlock(blockId, saveCallback) {
   document
     .querySelectorAll(`.insert-btn[data-target="${blockId}"]`)
     .forEach((btn) => {
-      // FIX: Use 'pointerdown' instead of 'click' to correctly capture the event
-      // on the math-field component, even when clicking the rendered symbol inside it.
       btn.addEventListener("pointerdown", (event) => {
         if (!event.isTrusted) return;
 
