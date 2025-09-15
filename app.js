@@ -325,7 +325,7 @@ function renderQuizPage(quizIndex) {
       logicSymbols.length > 0
         ? `
         <div class="mb-2">
-            <h3 class="text-sm font-medium text-gray-600 mb-1">Logic & Set Symbols</h3>
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Symbols</h3>
             <div class="flex flex-wrap gap-2">${renderButtons(
               logicSymbols
             )}</div>
