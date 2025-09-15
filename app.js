@@ -2,7 +2,6 @@
 // 1. Disable page and separate each quiz with different version for different user
 // 2. Table formatting button (without border)
 // 4. Add superscript, subscript, Sigma, Pi
-// 5. Fix toggle switch (just enable/disable button -- mkae hover message as description (switching b/w math and text mode, text default))
 // 6. Hide copy/paste options in the menu
 // 7. Submit button: javascript print function, and instead of printing, save as pdf and save into a google drive folder
 // then remove the saved file
@@ -215,8 +214,13 @@ function attachEventListenersForBlock(blockId, saveCallback) {
   document
     .querySelectorAll(`.insert-btn[data-target="${blockId}"]`)
     .forEach((btn) => {
-      btn.addEventListener("click", (event) => {
+      // FIX: Use 'pointerdown' instead of 'click' to correctly capture the event
+      // on the math-field component, even when clicking the rendered symbol inside it.
+      btn.addEventListener("pointerdown", (event) => {
         if (!event.isTrusted) return;
+
+        // Prevent default browser actions like text selection and stop the event from bubbling further.
+        event.preventDefault();
         event.stopPropagation();
 
         const symbol = btn.dataset.symbol;
