@@ -32,6 +32,9 @@ const latexMap = {
   "∈": "\\in",
   "∉": "\\notin",
   "∪": "\\cup",
+  "^": "^", // Superscript
+  _: "_", // Subscript
+  exist: "\\exists",
 };
 
 // --- DATA STRUCTURE: QUIZ-BASED ---
@@ -50,6 +53,10 @@ const quizSet = [
           "\\rightarrow",
           "\\lor",
           "\\land",
+          "^",
+          "_",
+          "\\sum",
+          "\\prod",
         ],
       },
       {
@@ -149,8 +156,12 @@ function renderInstructions() {
     symbols
       .map((symbol) => {
         const latex = latexMap[symbol] || symbol;
-        const buttonText = symbol === "overline" ? "Overline" : latex;
-        return `<math-field read-only data-target="${trialTargetId}" data-symbol="${latex}" class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-base cursor-pointer select-none">${buttonText}</math-field>`;
+        // --- MODIFICATION START ---
+        let buttonText = latex;
+        if (symbol === "overline") buttonText = "\\overline{\\square}";
+        // Use consistent styling with quiz buttons
+        return `<math-field read-only data-target="${trialTargetId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
+        // --- MODIFICATION END ---
       })
       .join("");
 
@@ -217,7 +228,6 @@ function attachEventListenersForBlock(blockId, saveCallback) {
       btn.addEventListener("pointerdown", (event) => {
         if (!event.isTrusted) return;
 
-        // Prevent default browser actions like text selection and stop the event from bubbling further.
         event.preventDefault();
         event.stopPropagation();
 
@@ -227,8 +237,19 @@ function attachEventListenersForBlock(blockId, saveCallback) {
           toggle.checked = true;
         }
 
-        if (symbol.includes("overline")) mf.insert("\\overline{#?}");
-        else mf.executeCommand("insert", symbol);
+        if (symbol.includes("overline")) {
+          mf.insert("\\overline{#0}");
+        } else if (symbol === "^") {
+          mf.insert("^{#0}");
+        } else if (symbol === "_") {
+          mf.insert("_{#0}");
+        } else if (symbol === "\\sum") {
+          mf.insert("\\sum_{#?}^{#?}");
+        } else if (symbol === "\\prod") {
+          mf.insert("\\prod_{#?}^{#?}");
+        } else {
+          mf.executeCommand("insert", symbol);
+        }
 
         mf.focus();
       });
@@ -259,23 +280,67 @@ function renderQuizPage(quizIndex) {
     const block = document.createElement("div");
     block.className = "bg-white p-4 rounded shadow border border-gray-200 mb-6";
 
+    // Define which symbols go into the new operator row
+    const operatorSymbolsList = ["overline", "\\sum", "\\prod", "_", "^"];
+
+    // Filter the symbols into two separate groups
+    const operatorSymbols = item.symbols.filter((s) =>
+      operatorSymbolsList.includes(s)
+    );
+    const logicSymbols = item.symbols.filter(
+      (s) => !operatorSymbolsList.includes(s)
+    );
+
     const renderButtons = (symbols) =>
       symbols
         .map((symbol) => {
           const latex = latexMap[symbol] || symbol;
-          const buttonText = symbol === "overline" ? "Overline" : latex;
-          return `<math-field read-only data-target="${blockId}" data-symbol="${latex}" class="px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-base cursor-pointer select-none">${buttonText}</math-field>`;
+          let buttonText = latex;
+          if (symbol === "overline") buttonText = "\\overline{\\square}";
+          if (symbol === "^") buttonText = "x^\\square";
+          if (symbol === "_") buttonText = "x_\\square";
+          // --- MODIFICATION START ---
+          if (symbol === "\\sum")
+            buttonText = "\\textstyle{\\sum_{\\square}^{\\square}}";
+          if (symbol === "\\prod")
+            buttonText = "\\textstyle{\\prod_{\\square}^{\\square}}";
+          // --- MODIFICATION END ---
+          return `<math-field read-only data-target="${blockId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
         })
         .join("");
+
+    // Create the HTML for the two separate symbol rows
+    const operatorRow =
+      operatorSymbols.length > 0
+        ? `
+        <div class="mb-3">
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Formatting & Operators</h3>
+            <div class="flex flex-wrap gap-2">${renderButtons(
+              operatorSymbols
+            )}</div>
+        </div>`
+        : "";
+
+    const logicRow =
+      logicSymbols.length > 0
+        ? `
+        <div class="mb-2">
+            <h3 class="text-sm font-medium text-gray-600 mb-1">Logic & Set Symbols</h3>
+            <div class="flex flex-wrap gap-2">${renderButtons(
+              logicSymbols
+            )}</div>
+        </div>`
+        : "";
 
     block.innerHTML = `
         <h2 class="text-lg font-semibold mb-2">Question ${questionIdx + 1}</h2>
         <div class="mb-4 text-xl"><math-field read-only class="pointer-events-none">${
           item.question
         }</math-field></div>
-        <div class="mb-2"><h3 class="text-sm font-medium text-gray-600 mb-1">Symbols</h3><div class="flex flex-wrap gap-2">${renderButtons(
-          item.symbols
-        )}</div></div>
+        
+        ${operatorRow}
+        ${logicRow}
+
         <div class="flex items-center justify-end gap-2 mb-2">
           <span class="text-sm font-medium text-gray-800">Text</span>
           <label class="relative inline-flex items-center cursor-pointer">
@@ -287,6 +352,7 @@ function renderQuizPage(quizIndex) {
         </div>
         <math-field id="${blockId}" class="w-full p-2 text-lg bg-white border border-gray-300 rounded" default-mode="text" virtual-keyboard-mode="manual"></math-field>
       `;
+
     container.appendChild(block);
 
     const inputField = document.getElementById(blockId);
