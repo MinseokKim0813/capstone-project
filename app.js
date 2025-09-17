@@ -1,5 +1,5 @@
 // --- THEME AND GLOBAL SETUP ---
-document.body.style.backgroundColor = "#e0e0e0"; // CHANGED: To a light gray for contrast
+document.body.style.backgroundColor = "#e0e0e0";
 document.body.style.color = "black";
 
 // Generates a unique user ID for the session and randomly selects a quiz
@@ -32,34 +32,12 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
-        symbols: [
-          "overline",
-          "\\cdot",
-          "\\neg",
-          "\\neq",
-          "\\rightarrow",
-          "\\lor",
-          "\\land",
-          "^",
-          "_",
-          "\\sum",
-          "\\prod",
-        ],
+        symbols: ["\\cdot", "\\neq"],
       },
       {
         question:
           "\\text{Prove or disprove: $\\overline{A - B} = \\overline{A} \\cup \\overline{B}$}",
-        symbols: [
-          "overline",
-          "\\cdot",
-          "\\neg",
-          "\\neq",
-          "\\rightarrow",
-          "\\lor",
-          "\\land",
-          "\\cup",
-          "\\cap",
-        ],
+        symbols: ["\\in", "\\mid", "\\land", "\\neg", "\\lor", "\\cup", "\\ne"],
       },
     ],
   },
@@ -69,20 +47,20 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x \\cdot y} + \\overline{x + z}} = x \\cdot (y + z)$? Justify clearly.}",
-        symbols: [
-          "overline",
-          "\\cdot",
-          "\\neg",
-          "\\neq",
-          "\\rightarrow",
-          "\\lor",
-          "\\land",
-        ],
+        symbols: ["\\cdot", "\\neq"],
       },
       {
         question:
           "\\text{Prove that $A \\cap (B - C) = (A \\cap B) - (A \\cap C)$}}",
-        symbols: [],
+        symbols: [
+          "\\cap",
+          "\\in",
+          "\\iff",
+          "\\land",
+          "\\neg",
+          "\\lor",
+          "\\Rightarrow",
+        ],
       },
     ],
   },
@@ -92,12 +70,12 @@ const quizSet = [
       {
         question:
           "\\text{Use a truth table to show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$.}",
-        symbols: ["\\neg", "\\lor", "\\land", "\\rightarrow"],
+        symbols: ["\\neg", "\\lor", "\\land", "\\to"],
       },
       {
         question:
           "\\text{Prove the following old rule: An integer is divisible by 3 if and only if the sum of its digits is divisible by 3.}",
-        symbols: [],
+        symbols: ["\\cdot", "\\leq", "\\equiv"],
       },
     ],
   },
@@ -255,18 +233,20 @@ function renderQuizPage(quizIdx) {
   quizTitle.textContent = quiz.title;
   container.appendChild(quizTitle);
 
+  const fixedOperatorList = ["overline", "^", "_", "\\sum", "\\prod"];
+
   quiz.questions.forEach((item, questionIdx) => {
     const blockId = `input-${quizIdx}-${questionIdx}`;
     const block = document.createElement("div");
     block.className = "bg-white p-4 mb-6 question-block";
 
-    const operatorSymbolsList = ["overline", "\\sum", "\\prod", "_", "^"];
-    const operatorSymbols = [
-      "table",
-      ...item.symbols.filter((s) => operatorSymbolsList.includes(s)),
-    ];
-    const logicSymbols = item.symbols.filter(
-      (s) => !operatorSymbolsList.includes(s)
+    // 1. The "Formatting & Operators" buttons are always the fixed list, plus the "table" button.
+    const operatorSymbols = [...fixedOperatorList, "table"];
+
+    // 2. The "Symbols" buttons are specific to the question. We take the question's
+    //    symbol list and filter out any symbols that are already in our fixed operator list.
+    const logicSymbols = (item.symbols || []).filter(
+      (s) => !fixedOperatorList.includes(s)
     );
 
     const renderButtons = (symbols) =>
