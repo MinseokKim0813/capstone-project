@@ -1,0 +1,16 @@
+// TODO:
+// 2. Table formatting button (without border)
+// 6. Hide copy/paste options in the menu
+// 7. Write to let them know new line is mathmode + command enter for the first line
+// - Give example to let them toggle between text and math mode
+// - Check if I can make it 2 lines default so simple enter works
+// Remove all the options except inserts, color, background
+// 10. Milestone table
+
+// DONE
+// 1. fix the toggle button
+// 4. Add superscript, subscript, Sigma, Pi
+// 1. Disable page and separate each quiz with different version for different user
+// 7. Submit button: javascript print function, and instead of printing, save as pdf and save into a google drive folder
+// then remove the saved file
+

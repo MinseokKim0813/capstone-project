@@ -1,0 +1,64 @@
+/*
+  A3 Landscape Dimensions: 42.0cm x 29.7cm
+*/
+
+/* This rule tells the browser's print dialog to default to A3 landscape */
+@page {
+  size: A3 landscape;
+  margin: 1in;
+}
+
+/* Styles for viewing on screen */
+@media screen {
+  body {
+    background-color: #e0e0e0;
+  }
+
+  /* Style the main container to look like a sheet of paper */
+  #questions {
+    background-color: white;
+    width: 42cm; /* A3 landscape width */
+    min-height: 29.7cm; /* A3 landscape height */
+    padding: 2cm;
+    margin: 1cm auto;
+    border: 1px solid #d3d3d3;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+    box-sizing: border-box; /* Ensures padding is part of the total width/height */
+  }
+}
+
+/* Styles specifically for printing */
+@media print {
+  body,
+  #questions {
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+    background-color: white;
+  }
+
+  .no-print {
+    display: none !important;
+  }
+
+  /* This keeps the border on the entire question block */
+  .question-block {
+    border: 1px solid #ccc !important;
+    box-shadow: none !important;
+    padding: 1em;
+    page-break-inside: avoid;
+  }
+
+  /* This keeps the border on the answer area */
+  math-field {
+    border: 1px solid #ddd !important;
+    padding: 0.5em;
+  }
+
+  /* --- NEW RULE --- */
+  /* This specifically targets and removes the border from the question problem's math-field */
+  .question-block math-field.pointer-events-none {
+    border: none !important;
+    padding: 0 !important; /* Also remove padding to align it correctly */
+  }
+}

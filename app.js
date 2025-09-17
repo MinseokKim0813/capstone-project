@@ -1,25 +1,10 @@
-// TODO:
-// 1. Disable page and separate each quiz with different version for different user
-// 2. Table formatting button (without border)
-// 6. Hide copy/paste options in the menu
-// 7. Submit button: javascript print function, and instead of printing, save as pdf and save into a google drive folder
-// then remove the saved file
-// 7. Write to let them know new line is mathmode + command enter for the first line
-// - Give example to let them toggle between text and math mode
-// - Check if I can make it 2 lines default so simple enter works
-// Remove all the options except inserts, color, background
-// 10. Milestone table
-
-// DONE
-// 1. fix the toggle button
-// 4. Add superscript, subscript, Sigma, Pi
-
-const { jsPDF } = window.jspdf;
-const doc = new jsPDF();
-
 // --- THEME AND GLOBAL SETUP ---
-document.body.style.backgroundColor = "white";
+document.body.style.backgroundColor = "#e0e0e0"; // CHANGED: To a light gray for contrast
 document.body.style.color = "black";
+
+// Generates a unique user ID for the session and randomly selects a quiz
+const userId = "user-" + Math.random().toString(36).substring(2, 9);
+const quizIndex = Math.floor(Math.random() * 3); // Randomly picks 0, 1, or 2
 
 const latexMap = {
   "→": "\\rightarrow",
@@ -42,7 +27,7 @@ const latexMap = {
 // --- DATA STRUCTURE: QUIZ-BASED ---
 const quizSet = [
   {
-    title: "Math Quiz 1",
+    title: "Math Quiz (Version 1)",
     questions: [
       {
         question:
@@ -79,7 +64,7 @@ const quizSet = [
     ],
   },
   {
-    title: "Math Quiz 2",
+    title: "Math Quiz (Version 2)",
     questions: [
       {
         question:
@@ -102,7 +87,7 @@ const quizSet = [
     ],
   },
   {
-    title: "Math Quiz 3",
+    title: "Math Quiz (Version 3)",
     questions: [
       {
         question:
@@ -119,33 +104,32 @@ const quizSet = [
 ];
 
 // --- STATE MANAGEMENT ---
-let currentQuizIndex = 0;
-const totalQuizzes = quizSet.length;
 const mainAppContainer = document.getElementById("questions");
-const answers = quizSet.map((quiz) => quiz.questions.map(() => ""));
+const answers = quizSet[quizIndex].questions.map(() => "");
 
 // --- FUNCTIONS ---
 function renderInstructions() {
   mainAppContainer.innerHTML = `
     <div id="instructions-container" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
       <h1 class="text-3xl font-bold mb-4 text-gray-800">Instructions</h1>
-      <p class="mb-4 text-gray-600">This is an interface for mathematical writing. Please follow these steps to write your solutions:</p>
-      <ul class="list-decimal list-inside mb-6 space-y-2 text-gray-700">
-        <li>Type your answer in the text box. You can mix regular text and math.</li>
-        <li>Click the symbol buttons (e.g., '→', '¬') to insert them into your answer.</li>
-        <li>Use the <strong>Text/Math toggle switch</strong> to change the input mode manually at any time.</li>
+      <p class="mb-4 text-gray-600">This is an interface for mathematical writing. Please follow these instructions:</p>
+      <ul class="list-decimal list-inside mb-6 space-y-3 text-gray-700">
+        <li>Type your solution in the text box. You can mix regular text and mathematical formulas.</li>
+        <li>To write math, click the <strong>Text/Math toggle switch</strong>. When it's blue, you are in Math mode.
+            <br><em class="text-gray-500 text-sm">Example: Type "The answer is", switch to Math mode, type "x^2", switch back to Text mode, and continue writing.</em>
+        </li>
+        <li>To create a new line in your answer, simply press the <strong>Enter</strong> key.</li>
+        <li>Use the symbol and layout buttons to insert complex structures like tables or operators.</li>
       </ul>
       <hr class="my-6">
       <h2 class="text-2xl font-semibold mb-4">Trial Question</h2>
       <p class="mb-4 text-gray-500">Use the tools below to practice. Your answer here will not be graded.</p>
-      <div id="trial-question-block">
-        </div>
-      <button id="start-quiz-btn" class="w-full mt-8 px-4 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors">Begin Quiz 1</button>
+      <div id="trial-question-block"></div>
+      <button id="start-quiz-btn" class="w-full mt-8 px-4 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors">Begin Quiz</button>
     </div>
     
     <div id="quiz-wrapper" class="hidden">
         <div id="quiz-content-container"></div>
-        <div id="pagination-container"></div>
     </div>
   `;
 
@@ -169,13 +153,13 @@ function renderInstructions() {
             \\text{In digital logic, 'not p' can be written with an overline, like } \\overline{p}. \\text{ Given that } p \\rightarrow q \\text{ is equivalent to 'not p or q', write it using the overline notation.}
         </math-field>
     </div>
-    <div class="mb-2">
+    <div class="mb-2 no-print">
         <h3 class="text-sm font-medium text-gray-600 mb-1">Practice Symbols</h3>
         <div class="flex flex-wrap gap-2">${renderTrialButtons(
           trialSymbols
         )}</div>
     </div>
-    <div class="flex items-center justify-end gap-2 my-2">
+    <div class="flex items-center justify-end gap-2 my-2 no-print">
       <span class="text-sm font-medium text-gray-800">Text</span>
       <label class="relative inline-flex items-center cursor-pointer">
         <input type="checkbox" data-toggle-target="${trialTargetId}" class="sr-only peer">
@@ -194,30 +178,26 @@ function renderInstructions() {
   `;
 
   const trialMf = document.getElementById(trialTargetId);
-  if (trialMf) {
-    trialMf.value = "";
-
-    // MODIFICATION: Override the Enter key behavior while preserving defaults
-    trialMf.keybindings = [
-      { key: "[Enter]", command: "addRowAfter" },
-      { key: "[Return]", command: "addRowAfter" },
-      ...trialMf.keybindings,
-    ];
-  }
+  trialMf.keybindings = [
+    { key: "[Enter]", command: "addRowAfter" },
+    { key: "[Return]", command: "addRowAfter" },
+    ...trialMf.keybindings,
+  ];
 
   attachEventListenersForBlock(trialTargetId);
 
   document.getElementById("start-quiz-btn").addEventListener("click", () => {
-    document.getElementById("instructions-container").classList.add("hidden");
+    document.getElementById("instructions-container").style.display = "none";
     document.getElementById("quiz-wrapper").classList.remove("hidden");
-    setupPagination();
-    renderQuizPage(currentQuizIndex);
+    renderQuizPage(quizIndex);
   });
 }
 
 function attachEventListenersForBlock(blockId, saveCallback) {
   const mf = document.getElementById(blockId);
   if (!mf) return;
+
+  mf.addEventListener("contextmenu", (e) => e.preventDefault());
 
   if (saveCallback) {
     mf.addEventListener("input", () => saveCallback(mf.value));
@@ -227,8 +207,7 @@ function attachEventListenersForBlock(blockId, saveCallback) {
     `input[data-toggle-target="${blockId}"]`
   );
   toggle?.addEventListener("change", () => {
-    const mode = toggle.checked ? "math" : "text";
-    mf.executeCommand(["switchMode", mode]);
+    mf.executeCommand(["switchMode", toggle.checked ? "math" : "text"]);
     mf.focus();
   });
 
@@ -237,17 +216,18 @@ function attachEventListenersForBlock(blockId, saveCallback) {
     .forEach((btn) => {
       btn.addEventListener("pointerdown", (event) => {
         if (!event.isTrusted) return;
-
         event.preventDefault();
         event.stopPropagation();
 
         const symbol = btn.dataset.symbol;
-        mf.executeCommand(["switchMode", "math"]);
-        if (toggle && !toggle.checked) {
-          toggle.checked = true;
-        }
+        const type = btn.dataset.type;
 
-        if (symbol.includes("overline")) {
+        mf.executeCommand(["switchMode", "math"]);
+        if (toggle && !toggle.checked) toggle.checked = true;
+
+        if (type === "table") {
+          mf.insert("\\begin{array}{cc} #0 & #? \\\\ #? & #? \\end{array}");
+        } else if (symbol.includes("overline")) {
           mf.insert("\\overline{#0}");
         } else if (symbol === "^") {
           mf.insert("^{#0}");
@@ -260,17 +240,14 @@ function attachEventListenersForBlock(blockId, saveCallback) {
         } else {
           mf.executeCommand("insert", symbol);
         }
-
         mf.focus();
       });
     });
 }
 
-function renderQuizPage(quizIndex) {
-  const quiz = quizSet[quizIndex];
+function renderQuizPage(quizIdx) {
+  const quiz = quizSet[quizIdx];
   const container = document.getElementById("quiz-content-container");
-  if (!quiz || !container) return;
-
   container.innerHTML = "";
 
   const quizTitle = document.createElement("h1");
@@ -278,22 +255,16 @@ function renderQuizPage(quizIndex) {
   quizTitle.textContent = quiz.title;
   container.appendChild(quizTitle);
 
-  if (quiz.questions.length === 0) {
-    container.innerHTML +=
-      '<p class="text-gray-500">There are no questions in this quiz yet.</p>';
-    updateNavButtons();
-    return;
-  }
-
   quiz.questions.forEach((item, questionIdx) => {
-    const blockId = `input-${quizIndex}-${questionIdx}`;
+    const blockId = `input-${quizIdx}-${questionIdx}`;
     const block = document.createElement("div");
-    block.className = "bg-white p-4 rounded shadow border border-gray-200 mb-6";
+    block.className = "bg-white p-4 mb-6 question-block";
 
     const operatorSymbolsList = ["overline", "\\sum", "\\prod", "_", "^"];
-    const operatorSymbols = item.symbols.filter((s) =>
-      operatorSymbolsList.includes(s)
-    );
+    const operatorSymbols = [
+      "table",
+      ...item.symbols.filter((s) => operatorSymbolsList.includes(s)),
+    ];
     const logicSymbols = item.symbols.filter(
       (s) => !operatorSymbolsList.includes(s)
     );
@@ -301,14 +272,18 @@ function renderQuizPage(quizIndex) {
     const renderButtons = (symbols) =>
       symbols
         .map((symbol) => {
+          if (symbol === "table") {
+            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Insert Table</button>`;
+          }
+
           const latex = latexMap[symbol] || symbol;
           let buttonText = latex;
           if (symbol === "overline") buttonText = "\\overline{\\square}";
-          if (symbol === "^") buttonText = "x^\\square";
-          if (symbol === "_") buttonText = "x_\\square";
-          if (symbol === "\\sum")
+          else if (symbol === "^") buttonText = "x^\\square";
+          else if (symbol === "_") buttonText = "x_\\square";
+          else if (symbol === "\\sum")
             buttonText = "\\textstyle{\\sum_{\\square}^{\\square}}";
-          if (symbol === "\\prod")
+          else if (symbol === "\\prod")
             buttonText = "\\textstyle{\\prod_{\\square}^{\\square}}";
           return `<math-field read-only data-target="${blockId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
         })
@@ -317,9 +292,9 @@ function renderQuizPage(quizIndex) {
     const operatorRow =
       operatorSymbols.length > 0
         ? `
-        <div class="mb-3">
+        <div class="mb-3 no-print">
             <h3 class="text-sm font-medium text-gray-600 mb-1">Formatting & Operators</h3>
-            <div class="flex flex-wrap gap-2">${renderButtons(
+            <div class="flex flex-wrap items-center gap-2">${renderButtons(
               operatorSymbols
             )}</div>
         </div>`
@@ -328,7 +303,7 @@ function renderQuizPage(quizIndex) {
     const logicRow =
       logicSymbols.length > 0
         ? `
-        <div class="mb-2">
+        <div class="mb-2 no-print">
             <h3 class="text-sm font-medium text-gray-600 mb-1">Symbols</h3>
             <div class="flex flex-wrap gap-2">${renderButtons(
               logicSymbols
@@ -341,11 +316,10 @@ function renderQuizPage(quizIndex) {
         <div class="mb-4 text-xl"><math-field read-only class="pointer-events-none">${
           item.question
         }</math-field></div>
-        
         ${operatorRow}
         ${logicRow}
 
-        <div class="flex items-center justify-end gap-2 mb-2">
+        <div class="flex items-center justify-end gap-2 mb-2 no-print">
           <span class="text-sm font-medium text-gray-800">Text</span>
           <label class="relative inline-flex items-center cursor-pointer">
             <input type="checkbox" data-toggle-target="${blockId}" class="sr-only peer">
@@ -356,84 +330,28 @@ function renderQuizPage(quizIndex) {
         </div>
         <math-field id="${blockId}" class="w-full p-2 text-lg bg-white border border-gray-300 rounded" default-mode="text" virtual-keyboard-mode="manual"></math-field>
       `;
-
     container.appendChild(block);
 
     const inputField = document.getElementById(blockId);
-    if (inputField) {
-      inputField.value = answers[quizIndex][questionIdx] || "";
-
-      // MODIFICATION: Override the Enter key behavior while preserving defaults
-      inputField.keybindings = [
-        { key: "[Enter]", command: "addRowAfter" },
-        { key: "[Return]", command: "addRowAfter" },
-        ...inputField.keybindings,
-      ];
-    }
+    inputField.value = answers[questionIdx] || "";
+    inputField.keybindings = [
+      { key: "[Enter]", command: "addRowAfter" },
+      { key: "[Return]", command: "addRowAfter" },
+      ...inputField.keybindings,
+    ];
 
     attachEventListenersForBlock(blockId, (value) => {
-      answers[quizIndex][questionIdx] = value;
+      answers[questionIdx] = value;
     });
   });
 
   const submitContainer = document.createElement("div");
-  submitContainer.className = "flex justify-center mt-8";
-  submitContainer.innerHTML = `<button id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">Submit Quiz</button>`;
+  submitContainer.className = "flex justify-center mt-8 no-print";
+  submitContainer.innerHTML = `<button id="submit-btn" class="px-6 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors focus:outline-none focus:ring-2 focus:ring-green-400 focus:ring-opacity-75">Submit & Save as PDF</button>`;
   container.appendChild(submitContainer);
 
   document.getElementById("submit-btn").addEventListener("click", () => {
-    const currentAnswers = answers[quizIndex];
-    console.log(`--- Quiz ${quizIndex + 1} Submitted ---`);
-    console.log(`Title: ${quiz.title}`);
-    currentAnswers.forEach((answer, idx) =>
-      console.log(`Question ${idx + 1}:`, answer || "(No answer provided)")
-    );
-    console.log("-------------------------");
-    alert(`Quiz "${quiz.title}" submitted! Check the console for answers.`);
-  });
-
-  updateNavButtons();
-}
-
-function setupPagination() {
-  const navContainer = document.getElementById("pagination-container");
-  navContainer.className = "flex items-center justify-center gap-4 my-8";
-  const buttonClasses =
-    "px-4 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow-md hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-400 focus:ring-opacity-75";
-  navContainer.innerHTML = `
-        <button id="prev-btn" class="${buttonClasses}">Previous Quiz</button>
-        <span id="page-indicator" class="font-semibold text-gray-700 text-lg"></span>
-        <button id="next-btn" class="${buttonClasses}">Next Quiz</button>
-    `;
-
-  document.getElementById("prev-btn").addEventListener("click", () => {
-    if (currentQuizIndex > 0) {
-      currentQuizIndex--;
-      renderQuizPage(currentQuizIndex);
-    }
-  });
-
-  document.getElementById("next-btn").addEventListener("click", () => {
-    if (currentQuizIndex < totalQuizzes - 1) {
-      currentQuizIndex++;
-      renderQuizPage(currentQuizIndex);
-    }
-  });
-}
-
-function updateNavButtons() {
-  const prevButton = document.getElementById("prev-btn");
-  const nextButton = document.getElementById("next-btn");
-  const pageIndicator = document.getElementById("page-indicator");
-  if (!prevButton || !nextButton || !pageIndicator) return;
-
-  pageIndicator.textContent = `Quiz ${currentQuizIndex + 1} of ${totalQuizzes}`;
-  prevButton.disabled = currentQuizIndex === 0;
-  nextButton.disabled = currentQuizIndex === totalQuizzes - 1;
-
-  [prevButton, nextButton].forEach((btn) => {
-    if (btn.disabled) btn.classList.add("opacity-50", "cursor-not-allowed");
-    else btn.classList.remove("opacity-50", "cursor-not-allowed");
+    window.print();
   });
 }
 
