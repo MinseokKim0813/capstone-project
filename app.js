@@ -253,7 +253,7 @@ function renderQuizPage(quizIdx) {
       symbols
         .map((symbol) => {
           if (symbol === "table") {
-            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Insert Table</button>`;
+            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
           }
 
           const latex = latexMap[symbol] || symbol;
