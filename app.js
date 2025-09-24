@@ -25,6 +25,7 @@ const latexMap = {
 };
 
 // --- DATA STRUCTURE: QUIZ-BASED ---
+// Each question's `symbols` array is now the single source of truth for all available buttons.
 const quizSet = [
   {
     title: "Math Quiz (Version 1)",
@@ -32,12 +33,21 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq"],
+        symbols: ["\\cdot", "\\neq", "overline"], // Added "overline"
       },
       {
         question:
           "\\text{Prove or disprove: $\\overline{A - B} = \\overline{A} \\cup \\overline{B}$}",
-        symbols: ["\\in", "\\mid", "\\land", "\\neg", "\\lor", "\\cup", "\\ne"],
+        symbols: [
+          "\\in",
+          "\\mid",
+          "\\land",
+          "\\neg",
+          "\\lor",
+          "\\cup",
+          "\\ne",
+          "overline",
+        ], // Added "overline"
       },
     ],
   },
@@ -47,7 +57,7 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x \\cdot y} + \\overline{x + z}} = x \\cdot (y + z)$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq"],
+        symbols: ["\\cdot", "\\neq", "overline"], // Added "overline"
       },
       {
         question:
@@ -70,12 +80,12 @@ const quizSet = [
       {
         question:
           "\\text{Use a truth table to show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$.}",
-        symbols: ["\\neg", "\\lor", "\\land", "\\to"],
+        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"], // Added "table"
       },
       {
         question:
           "\\text{Prove the following old rule: An integer is divisible by 3 if and only if the sum of its digits is divisible by 3.}",
-        symbols: ["\\cdot", "\\leq", "\\equiv"],
+        symbols: ["\\cdot", "\\leq", "\\equiv", "\\sum", "^", "_"], // Added formatting/operator symbols
       },
     ],
   },
@@ -233,27 +243,29 @@ function renderQuizPage(quizIdx) {
   quizTitle.textContent = quiz.title;
   container.appendChild(quizTitle);
 
-  const fixedOperatorList = ["overline", "^", "_", "\\sum", "\\prod"];
+  // Define which symbols are classified as "operators" or formatting tools.
+  const operatorKeywords = ["overline", "^", "_", "\\sum", "\\prod", "table"];
 
   quiz.questions.forEach((item, questionIdx) => {
     const blockId = `input-${quizIdx}-${questionIdx}`;
     const block = document.createElement("div");
     block.className = "bg-white p-4 mb-6 question-block";
 
-    // 1. The "Formatting & Operators" buttons are always the fixed list, plus the "table" button.
-    const operatorSymbols = [...fixedOperatorList, "table"];
+    const allQuestionSymbols = item.symbols || [];
 
-    // 2. The "Symbols" buttons are specific to the question. We take the question's
-    //    symbol list and filter out any symbols that are already in our fixed operator list.
-    const logicSymbols = (item.symbols || []).filter(
-      (s) => !fixedOperatorList.includes(s)
+    // Partition the question's symbols into two groups based on the keywords.
+    const operatorSymbols = allQuestionSymbols.filter((s) =>
+      operatorKeywords.includes(s)
+    );
+    const logicSymbols = allQuestionSymbols.filter(
+      (s) => !operatorKeywords.includes(s)
     );
 
     const renderButtons = (symbols) =>
       symbols
         .map((symbol) => {
           if (symbol === "table") {
-            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
+            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table Entry</button>`;
           }
 
           const latex = latexMap[symbol] || symbol;
@@ -269,6 +281,7 @@ function renderQuizPage(quizIdx) {
         })
         .join("");
 
+    // Conditionally render the "Formatting & Operators" row if any are present for the question.
     const operatorRow =
       operatorSymbols.length > 0
         ? `
@@ -280,6 +293,7 @@ function renderQuizPage(quizIdx) {
         </div>`
         : "";
 
+    // Conditionally render the "Symbols" row if any are present for the question.
     const logicRow =
       logicSymbols.length > 0
         ? `
