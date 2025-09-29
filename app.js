@@ -2,9 +2,9 @@
 document.body.style.backgroundColor = "#e0e0e0";
 document.body.style.color = "black";
 
-// Generates a unique user ID for the session and randomly selects a quiz
+// Generates a unique user ID for the session
 const userId = "user-" + Math.random().toString(36).substring(2, 9);
-const quizIndex = Math.floor(Math.random() * 3); // Randomly picks 0, 1, or 2
+// Quiz index is now selected by the user, not randomly assigned here.
 
 const latexMap = {
   "→": "\\rightarrow",
@@ -93,10 +93,16 @@ const quizSet = [
 
 // --- STATE MANAGEMENT ---
 const mainAppContainer = document.getElementById("questions");
-const answers = quizSet[quizIndex].questions.map(() => "");
+// Answers array is now initialized after the user chooses a quiz version.
+let answers = [];
 
 // --- FUNCTIONS ---
 function renderInstructions() {
+  // Dynamically generate the dropdown options from the quizSet data.
+  const quizOptions = quizSet
+    .map((quiz, index) => `<option value="${index}">${quiz.title}</option>`)
+    .join("");
+
   mainAppContainer.innerHTML = `
     <div id="instructions-container" class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
       <h1 class="text-3xl font-bold mb-4 text-gray-800">Instructions</h1>
@@ -112,7 +118,15 @@ function renderInstructions() {
       <h2 class="text-2xl font-semibold mb-4">Practice Area</h2>
       <p class="mb-4 text-gray-500">Use the tools below to practice rewriting the following expressions. Your answers here will not be graded.</p>
       <div id="trial-question-block"></div>
-      <button id="start-quiz-btn" class="w-full mt-8 px-4 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors">Begin Quiz</button>
+
+      <div class="my-8">
+        <label for="quiz-version-select" class="block mb-2 text-lg font-medium text-gray-900">Choose your quiz version:</label>
+        <select id="quiz-version-select" class="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5">
+          ${quizOptions}
+        </select>
+      </div>
+      
+      <button id="start-quiz-btn" class="w-full px-4 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors">Begin Quiz</button>
     </div>
     
     <div id="quiz-wrapper" class="hidden">
@@ -121,7 +135,6 @@ function renderInstructions() {
   `;
 
   const trialBlock = mainAppContainer.querySelector("#trial-question-block");
-  // Expanded symbols for a more comprehensive practice session
   const trialSymbols = [
     "overline",
     "∨",
@@ -203,9 +216,19 @@ function renderInstructions() {
   attachEventListenersForBlock(trialTargetId);
 
   document.getElementById("start-quiz-btn").addEventListener("click", () => {
+    const selectedQuizIndex = parseInt(
+      document.getElementById("quiz-version-select").value,
+      10
+    );
+
+    // Initialize/reset the answers array based on the chosen quiz's number of questions.
+    answers = quizSet[selectedQuizIndex].questions.map(() => "");
+
     document.getElementById("instructions-container").style.display = "none";
     document.getElementById("quiz-wrapper").classList.remove("hidden");
-    renderQuizPage(quizIndex);
+
+    // Render the quiz page with the user's selected version.
+    renderQuizPage(selectedQuizIndex);
   });
 }
 
@@ -343,7 +366,7 @@ function renderQuizPage(quizIdx) {
           </label>
           <span class="text-sm font-medium text-gray-800">Math</span>
         </div>
-        <math-field id="${blockId}" class="w-full p-2 text-lg bg-white border border-gray-300 rounded" default-mode="text" virtual-keyboard-mode="manual"></math-field>
+        <math-field id="${blockId}" class="w-full p-2 text-lg bg-white border border-gray-300 rounded" default-mode="text" virtual-keyboard-mode="manual" placeholder="\\text{Write your answer here}"></math-field>
       `;
     container.appendChild(block);
 
