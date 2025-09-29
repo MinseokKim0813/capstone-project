@@ -21,11 +21,11 @@ const latexMap = {
   "∪": "\\cup",
   "^": "^", // Superscript
   _: "_", // Subscript
+  "\\land": "\\land",
   exist: "\\exists",
 };
 
 // --- DATA STRUCTURE: QUIZ-BASED ---
-// Each question's `symbols` array is now the single source of truth for all available buttons.
 const quizSet = [
   {
     title: "Math Quiz (Version 1)",
@@ -33,7 +33,7 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq", "overline"], // Added "overline"
+        symbols: ["\\cdot", "\\neq", "overline"],
       },
       {
         question:
@@ -47,7 +47,7 @@ const quizSet = [
           "\\cup",
           "\\ne",
           "overline",
-        ], // Added "overline"
+        ],
       },
     ],
   },
@@ -57,7 +57,7 @@ const quizSet = [
       {
         question:
           "\\text{Is it true that $\\overline{\\overline{x \\cdot y} + \\overline{x + z}} = x \\cdot (y + z)$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq", "overline"], // Added "overline"
+        symbols: ["\\cdot", "\\neq", "overline"],
       },
       {
         question:
@@ -80,12 +80,12 @@ const quizSet = [
       {
         question:
           "\\text{Use a truth table to show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$.}",
-        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"], // Added "table"
+        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"],
       },
       {
         question:
           "\\text{Prove the following old rule: An integer is divisible by 3 if and only if the sum of its digits is divisible by 3.}",
-        symbols: ["\\cdot", "\\leq", "\\equiv", "\\sum", "^", "_"], // Added formatting/operator symbols
+        symbols: ["\\cdot", "\\leq", "\\equiv", "\\sum", "^", "_"],
       },
     ],
   },
@@ -104,14 +104,13 @@ function renderInstructions() {
       <ul class="list-decimal list-inside mb-6 space-y-3 text-gray-700">
         <li>Type your solution in the text box. You can mix regular text and mathematical formulas.</li>
         <li>To write math, click the <strong>Text/Math toggle switch</strong>. When it's blue, you are in Math mode.
-            <br><em class="text-gray-500 text-sm">Example: Type "The answer is", switch to Math mode, type "x^2", switch back to Text mode, and continue writing.</em>
         </li>
         <li>To create a new line in your answer, simply press the <strong>Enter</strong> key.</li>
         <li>Use the symbol and layout buttons to insert complex structures like tables or operators.</li>
       </ul>
       <hr class="my-6">
-      <h2 class="text-2xl font-semibold mb-4">Trial Question</h2>
-      <p class="mb-4 text-gray-500">Use the tools below to practice. Your answer here will not be graded.</p>
+      <h2 class="text-2xl font-semibold mb-4">Practice Area</h2>
+      <p class="mb-4 text-gray-500">Use the tools below to practice rewriting the following expressions. Your answers here will not be graded.</p>
       <div id="trial-question-block"></div>
       <button id="start-quiz-btn" class="w-full mt-8 px-4 py-3 bg-green-600 text-white font-bold text-lg rounded-lg shadow-md hover:bg-green-700 transition-colors">Begin Quiz</button>
     </div>
@@ -122,27 +121,56 @@ function renderInstructions() {
   `;
 
   const trialBlock = mainAppContainer.querySelector("#trial-question-block");
-  const trialSymbols = ["overline", "∨", "→"];
+  // Expanded symbols for a more comprehensive practice session
+  const trialSymbols = [
+    "overline",
+    "∨",
+    "→",
+    "\\sum",
+    "^",
+    "_",
+    "\\land",
+    "table",
+  ];
   const trialTargetId = "input-trial";
 
   const renderTrialButtons = (symbols) =>
     symbols
       .map((symbol) => {
+        if (symbol === "table") {
+          return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table Entry</button>`;
+        }
         const latex = latexMap[symbol] || symbol;
         let buttonText = latex;
         if (symbol === "overline") buttonText = "\\overline{\\square}";
+        else if (symbol === "^") buttonText = "x^\\square";
+        else if (symbol === "_") buttonText = "x_\\square";
+        else if (symbol === "\\sum")
+          buttonText = "\\textstyle{\\sum_{\\square}^{\\square}}";
         return `<math-field read-only data-target="${trialTargetId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
       })
       .join("");
 
   trialBlock.innerHTML = `
-    <div class="mb-4 text-xl">
-        <math-field read-only class="pointer-events-none">
-            \\text{In digital logic, 'not p' can be written with an overline, like } \\overline{p}. \\text{ Given that } p \\rightarrow q \\text{ is equivalent to 'not p or q', write it using the overline notation.}
-        </math-field>
+    <div class="space-y-4 text-lg border p-4 rounded-lg bg-gray-50">
+        <div class="p-2">
+            <math-field read-only class="pointer-events-none">
+                \\text{1. Rewrite } p \\rightarrow q \\text{ (which is equivalent to 'not p or q') using the overline for 'not', like } \\overline{p}.
+            </math-field>
+        </div>
+         <div class="p-2">
+            <math-field read-only class="pointer-events-none">
+                \\text{2. Rewrite the expression for a summation: } \\sum_{i=1}^{n} a_i
+            </math-field>
+        </div>
+         <div class="p-2">
+            <math-field read-only class="pointer-events-none">
+                \\text{3. Use the table button to write a simple 2x2 truth table for } p \\land q.
+            </math-field>
+        </div>
     </div>
-    <div class="mb-2 no-print">
-        <h3 class="text-sm font-medium text-gray-600 mb-1">Practice Symbols</h3>
+    <div class="my-4 no-print">
+        <h3 class="text-sm font-medium text-gray-600 mb-1">Practice Symbols & Tools</h3>
         <div class="flex flex-wrap gap-2">${renderTrialButtons(
           trialSymbols
         )}</div>
@@ -161,7 +189,7 @@ function renderInstructions() {
         class="w-full p-2 text-lg bg-white border border-gray-300 rounded" 
         default-mode="text" 
         virtual-keyboard-mode="manual"
-        placeholder="\\text{Try writing $\\overline{p}\\lor q$ here...}">
+        placeholder="\\text{Try rewriting the expressions here...}">
     </math-field>
   `;
 
@@ -243,7 +271,6 @@ function renderQuizPage(quizIdx) {
   quizTitle.textContent = quiz.title;
   container.appendChild(quizTitle);
 
-  // Define which symbols are classified as "operators" or formatting tools.
   const operatorKeywords = ["overline", "^", "_", "\\sum", "\\prod", "table"];
 
   quiz.questions.forEach((item, questionIdx) => {
@@ -252,8 +279,6 @@ function renderQuizPage(quizIdx) {
     block.className = "bg-white p-4 mb-6 question-block";
 
     const allQuestionSymbols = item.symbols || [];
-
-    // Partition the question's symbols into two groups based on the keywords.
     const operatorSymbols = allQuestionSymbols.filter((s) =>
       operatorKeywords.includes(s)
     );
@@ -267,7 +292,6 @@ function renderQuizPage(quizIdx) {
           if (symbol === "table") {
             return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table Entry</button>`;
           }
-
           const latex = latexMap[symbol] || symbol;
           let buttonText = latex;
           if (symbol === "overline") buttonText = "\\overline{\\square}";
@@ -281,7 +305,6 @@ function renderQuizPage(quizIdx) {
         })
         .join("");
 
-    // Conditionally render the "Formatting & Operators" row if any are present for the question.
     const operatorRow =
       operatorSymbols.length > 0
         ? `
@@ -293,7 +316,6 @@ function renderQuizPage(quizIdx) {
         </div>`
         : "";
 
-    // Conditionally render the "Symbols" row if any are present for the question.
     const logicRow =
       logicSymbols.length > 0
         ? `
@@ -312,7 +334,6 @@ function renderQuizPage(quizIdx) {
         }</math-field></div>
         ${operatorRow}
         ${logicRow}
-
         <div class="flex items-center justify-end gap-2 mb-2 no-print">
           <span class="text-sm font-medium text-gray-800">Text</span>
           <label class="relative inline-flex items-center cursor-pointer">
