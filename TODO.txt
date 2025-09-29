@@ -2,7 +2,7 @@
 // 6. Hide copy/paste options in the menu
 // Remove all the options except inserts, color, background
 // 6. make "Table" button "Table Entry" and make it 1 by 1
-
+// 1. fix: when pressing enter, it becomes math mode
 
 // DONE
 // 2. Let the user choose the version in tutorial page, not randomly assign.
