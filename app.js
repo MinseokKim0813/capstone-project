@@ -150,7 +150,6 @@ function renderInstructions() {
   ];
   const trialTargetId = "input-trial";
 
-  // Partition the trial symbols into operators and logic symbols
   const operatorSymbols = trialSymbols.filter((s) =>
     operatorKeywords.includes(s)
   );
@@ -162,7 +161,8 @@ function renderInstructions() {
     symbols
       .map((symbol) => {
         if (symbol === "table") {
-          return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
+          // --- MODIFIED LINE ---
+          return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm table-icon-button"><div class="table-icon-grid"><div></div><div></div><div></div><div></div></div></button>`;
         }
         const latex = latexMap[symbol] || symbol;
         let buttonText = latex;
@@ -175,7 +175,6 @@ function renderInstructions() {
       })
       .join("");
 
-  // Conditionally create the HTML for each button row
   const operatorRow =
     operatorSymbols.length > 0
       ? `
@@ -359,15 +358,11 @@ function showTablePicker(button, mf) {
   // 2. Add event listeners for hover and click
   allCells.forEach((cell) => {
     cell.addEventListener("mouseover", (event) => {
-      // Get dimensions of the currently hovered cell
       const currentRows = parseInt(event.currentTarget.dataset.rows);
       const currentCols = parseInt(event.currentTarget.dataset.cols);
-
-      // Loop through all cells to apply highlighting correctly
       allCells.forEach((c_el) => {
         const cellRows = parseInt(c_el.dataset.rows);
         const cellCols = parseInt(c_el.dataset.cols);
-
         if (cellRows <= currentRows && cellCols <= currentCols) {
           c_el.classList.add("highlight");
         } else {
@@ -379,33 +374,34 @@ function showTablePicker(button, mf) {
     cell.addEventListener("click", (event) => {
       const rows = parseInt(event.currentTarget.dataset.rows);
       const cols = parseInt(event.currentTarget.dataset.cols);
-
       const allRows = Array.from({ length: rows }, (_, r_idx) =>
         Array.from({ length: cols }, (_, c_idx) =>
           r_idx === 0 && c_idx === 0 ? "#0" : "#?"
         ).join(" & ")
       ).join(" \\\\ ");
-
       const latex = `\\begin{array}{${"c".repeat(
         cols
       )}} ${allRows} \\end{array}`;
       mf.insert(latex);
       mf.focus();
-
-      picker.remove(); // Remove the picker after selection
+      picker.remove();
     });
   });
 
   // 3. Position and display the picker
   document.body.appendChild(picker);
   const btnRect = button.getBoundingClientRect();
-  picker.style.left = `${btnRect.left}px`;
-  picker.style.top = `${btnRect.bottom + 5}px`;
+  const pickerHeight = picker.offsetHeight;
+
+  // --- THIS IS THE CORRECTED LOGIC ---
+  // Position the picker above the button, accounting for page scroll.
+  picker.style.left = `${btnRect.left + window.scrollX}px`;
+  picker.style.top = `${btnRect.top + window.scrollY - pickerHeight - 5}px`;
 
   // 4. Add a listener to close the picker when clicking outside
   setTimeout(() => {
     document.addEventListener("click", function closePicker(e) {
-      if (!picker.contains(e.target) && e.target !== button) {
+      if (!picker.contains(e.target) && !button.contains(e.target)) {
         picker.remove();
         document.removeEventListener("click", closePicker);
       }
@@ -440,7 +436,8 @@ function renderQuizPage(quizIdx) {
       symbols
         .map((symbol) => {
           if (symbol === "table") {
-            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
+            // --- MODIFIED LINE ---
+            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm table-icon-button"><div class="table-icon-grid"><div></div><div></div><div></div><div></div></div></button>`;
           }
           const latex = latexMap[symbol] || symbol;
           let buttonText = latex;

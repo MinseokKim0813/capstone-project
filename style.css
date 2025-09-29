@@ -60,6 +60,28 @@
   .insert-matrix-submenu .picker-cell.highlight {
     background-color: #c0d8ff; /* Slightly darker highlight for better contrast */
   }
+  /* --- Styles for the Table Button Icon --- */
+  .table-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    vertical-align: middle;
+    line-height: 1;
+    padding: 0.6rem 0.75rem !important; /* Adjust padding for the icon */
+  }
+
+  .table-icon-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 5px;
+    width: 2.5em; /* Increased width to match other icons */
+    height: 2.5em; /* Increased height to match other icons */
+  }
+
+  .table-icon-grid > div {
+    background-color: transparent; /* Make the inside of the square see-through */
+    border: 2px solid currentColor; /* Use a 2px border for the outline */
+  }
 } /* End of @media screen */
 
 /* Styles specifically for printing */

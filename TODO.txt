@@ -1,8 +1,8 @@
 // TODO:
 // 1. fix: when pressing enter, it becomes math mode
-// 2. table button icon squares
 
 // DONE
+// 2. table button icon squares
 // 6. insert table adjustable
 // 6. Hide copy/paste options in the menu
 // Remove all the options except inserts, color, background
