@@ -1,9 +1,5 @@
 // TODO:
-// 2. Table formatting button (without border)
 // 6. Hide copy/paste options in the menu
-// 7. Write to let them know new line is mathmode + command enter for the first line
-// - Give example to let them toggle between text and math mode
-// - Check if I can make it 2 lines default so simple enter works
 // Remove all the options except inserts, color, background
 // 6. make "Table" button "Table Entry" and make it 1 by 1
 

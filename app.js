@@ -234,6 +234,10 @@ function attachEventListenersForBlock(blockId, saveCallback) {
   const mf = document.getElementById(blockId);
   if (!mf) return;
 
+  // Hide 'Cut', 'Copy', and 'Paste' from the context menu
+  const idsToHide = ["cut", "copy", "paste"];
+  mf.menuItems = mf.menuItems.filter((item) => !idsToHide.includes(item.id));
+
   mf.addEventListener("contextmenu", (e) => e.preventDefault());
 
   if (saveCallback) {
