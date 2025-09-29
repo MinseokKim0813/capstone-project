@@ -25,6 +25,9 @@ const latexMap = {
   exist: "\\exists",
 };
 
+// Define operator keywords globally to be shared by functions
+const operatorKeywords = ["overline", "^", "_", "\\sum", "\\prod", "table"];
+
 // --- DATA STRUCTURE: QUIZ-BASED ---
 const quizSet = [
   {
@@ -147,11 +150,19 @@ function renderInstructions() {
   ];
   const trialTargetId = "input-trial";
 
+  // Partition the trial symbols into operators and logic symbols
+  const operatorSymbols = trialSymbols.filter((s) =>
+    operatorKeywords.includes(s)
+  );
+  const logicSymbols = trialSymbols.filter(
+    (s) => !operatorKeywords.includes(s)
+  );
+
   const renderTrialButtons = (symbols) =>
     symbols
       .map((symbol) => {
         if (symbol === "table") {
-          return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table Entry</button>`;
+          return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
         }
         const latex = latexMap[symbol] || symbol;
         let buttonText = latex;
@@ -163,6 +174,29 @@ function renderInstructions() {
         return `<math-field read-only data-target="${trialTargetId}" data-symbol="${latex}" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn inline-block text-xl cursor-pointer select-none">${buttonText}</math-field>`;
       })
       .join("");
+
+  // Conditionally create the HTML for each button row
+  const operatorRow =
+    operatorSymbols.length > 0
+      ? `
+      <div class="mb-3 no-print">
+          <h3 class="text-sm font-medium text-gray-600 mb-1">Formatting & Operators</h3>
+          <div class="flex flex-wrap items-center gap-2">${renderTrialButtons(
+            operatorSymbols
+          )}</div>
+      </div>`
+      : "";
+
+  const logicRow =
+    logicSymbols.length > 0
+      ? `
+      <div class="mb-2 no-print">
+          <h3 class="text-sm font-medium text-gray-600 mb-1">Symbols</h3>
+          <div class="flex flex-wrap gap-2">${renderTrialButtons(
+            logicSymbols
+          )}</div>
+      </div>`
+      : "";
 
   trialBlock.innerHTML = `
     <div class="space-y-4 text-lg border p-4 rounded-lg bg-gray-50">
@@ -183,10 +217,8 @@ function renderInstructions() {
         </div>
     </div>
     <div class="my-4 no-print">
-        <h3 class="text-sm font-medium text-gray-600 mb-1">Practice Symbols & Tools</h3>
-        <div class="flex flex-wrap gap-2">${renderTrialButtons(
-          trialSymbols
-        )}</div>
+       ${operatorRow}
+       ${logicRow}
     </div>
     <div class="flex items-center justify-end gap-2 my-2 no-print">
       <span class="text-sm font-medium text-gray-800">Text</span>
@@ -267,7 +299,8 @@ function attachEventListenersForBlock(blockId, saveCallback) {
         if (toggle && !toggle.checked) toggle.checked = true;
 
         if (type === "table") {
-          mf.insert("\\begin{array}{cc} #0 & #? \\\\ #? & #? \\end{array}");
+          // --- NEW LOGIC: Show the custom table picker UI ---
+          showTablePicker(event.currentTarget, mf);
         } else if (symbol.includes("overline")) {
           mf.insert("\\overline{#0}");
         } else if (symbol === "^") {
@@ -285,6 +318,100 @@ function attachEventListenersForBlock(blockId, saveCallback) {
       });
     });
 }
+/**
+ * Creates and displays a grid UI for selecting table dimensions.
+ * @param {HTMLElement} button - The button that was clicked to trigger the picker.
+ * @param {MathfieldElement} mf - The mathfield to insert the table into.
+ */
+function showTablePicker(button, mf) {
+  // If a picker already exists, remove it.
+  const oldPicker = document.querySelector(".table-picker");
+  if (oldPicker) {
+    oldPicker.remove();
+    return; // Stop if we just closed an existing picker
+  }
+
+  // 1. Create the picker elements
+  const picker = document.createElement("div");
+  picker.className = "table-picker";
+
+  const grid = document.createElement("div");
+  grid.className = "insert-matrix-submenu";
+  picker.appendChild(grid);
+
+  const MAX_ROWS = 5;
+  const MAX_COLS = 5;
+
+  // Create the grid of cells
+  const allCells = [];
+  for (let r = 1; r <= MAX_ROWS; r++) {
+    for (let c = 1; c <= MAX_COLS; c++) {
+      const cell = document.createElement("div");
+      cell.className = "picker-cell";
+      cell.dataset.rows = r;
+      cell.dataset.cols = c;
+      cell.textContent = "☐";
+      grid.appendChild(cell);
+      allCells.push(cell);
+    }
+  }
+
+  // 2. Add event listeners for hover and click
+  allCells.forEach((cell) => {
+    cell.addEventListener("mouseover", (event) => {
+      // Get dimensions of the currently hovered cell
+      const currentRows = parseInt(event.currentTarget.dataset.rows);
+      const currentCols = parseInt(event.currentTarget.dataset.cols);
+
+      // Loop through all cells to apply highlighting correctly
+      allCells.forEach((c_el) => {
+        const cellRows = parseInt(c_el.dataset.rows);
+        const cellCols = parseInt(c_el.dataset.cols);
+
+        if (cellRows <= currentRows && cellCols <= currentCols) {
+          c_el.classList.add("highlight");
+        } else {
+          c_el.classList.remove("highlight");
+        }
+      });
+    });
+
+    cell.addEventListener("click", (event) => {
+      const rows = parseInt(event.currentTarget.dataset.rows);
+      const cols = parseInt(event.currentTarget.dataset.cols);
+
+      const allRows = Array.from({ length: rows }, (_, r_idx) =>
+        Array.from({ length: cols }, (_, c_idx) =>
+          r_idx === 0 && c_idx === 0 ? "#0" : "#?"
+        ).join(" & ")
+      ).join(" \\\\ ");
+
+      const latex = `\\begin{array}{${"c".repeat(
+        cols
+      )}} ${allRows} \\end{array}`;
+      mf.insert(latex);
+      mf.focus();
+
+      picker.remove(); // Remove the picker after selection
+    });
+  });
+
+  // 3. Position and display the picker
+  document.body.appendChild(picker);
+  const btnRect = button.getBoundingClientRect();
+  picker.style.left = `${btnRect.left}px`;
+  picker.style.top = `${btnRect.bottom + 5}px`;
+
+  // 4. Add a listener to close the picker when clicking outside
+  setTimeout(() => {
+    document.addEventListener("click", function closePicker(e) {
+      if (!picker.contains(e.target) && e.target !== button) {
+        picker.remove();
+        document.removeEventListener("click", closePicker);
+      }
+    });
+  }, 0);
+}
 
 function renderQuizPage(quizIdx) {
   const quiz = quizSet[quizIdx];
@@ -295,8 +422,6 @@ function renderQuizPage(quizIdx) {
   quizTitle.className = "text-3xl font-bold mb-6 text-gray-800";
   quizTitle.textContent = quiz.title;
   container.appendChild(quizTitle);
-
-  const operatorKeywords = ["overline", "^", "_", "\\sum", "\\prod", "table"];
 
   quiz.questions.forEach((item, questionIdx) => {
     const blockId = `input-${quizIdx}-${questionIdx}`;
@@ -315,7 +440,7 @@ function renderQuizPage(quizIdx) {
       symbols
         .map((symbol) => {
           if (symbol === "table") {
-            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table Entry</button>`;
+            return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm">Table</button>`;
           }
           const latex = latexMap[symbol] || symbol;
           let buttonText = latex;

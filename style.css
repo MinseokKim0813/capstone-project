@@ -25,7 +25,42 @@
     box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
     box-sizing: border-box; /* Ensures padding is part of the total width/height */
   }
-}
+  /* --- CORRECTED TABLE PICKER STYLES (Improved Visibility) --- */
+
+  .table-picker {
+    position: absolute;
+    background-color: white;
+    border: 1px solid #999; /* Slightly darker border for the overall picker */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    z-index: 1000;
+    padding: 5px;
+  }
+
+  .insert-matrix-submenu {
+    --_menu-item-size: 30px; /* Increased size for clearer squares */
+    display: grid;
+    grid-template-columns: repeat(5, var(--_menu-item-size));
+    gap: 1px; /* Consistent gap for uniform "borders" between cells */
+    background-color: #ddd; /* This color acts as the border lines between cells */
+  }
+
+  .insert-matrix-submenu .picker-cell {
+    width: var(--_menu-item-size);
+    height: var(--_menu-item-size);
+    background-color: #fefefe; /* Clearer background for the cells */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px; /* Increased font size to match larger squares */
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  /* Class for highlighting the selected grid area */
+  .insert-matrix-submenu .picker-cell.highlight {
+    background-color: #c0d8ff; /* Slightly darker highlight for better contrast */
+  }
+} /* End of @media screen */
 
 /* Styles specifically for printing */
 @media print {
