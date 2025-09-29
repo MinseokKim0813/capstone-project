@@ -167,17 +167,17 @@ function renderInstructions() {
   trialBlock.innerHTML = `
     <div class="space-y-4 text-lg border p-4 rounded-lg bg-gray-50">
         <div class="p-2">
-            <math-field read-only class="pointer-events-none">
+            <math-field read-only class="pointer-events-none bg-gray-50" >
                 \\text{1. Rewrite } p \\rightarrow q \\text{ (which is equivalent to 'not p or q') using the overline for 'not', like } \\overline{p}.
             </math-field>
         </div>
          <div class="p-2">
-            <math-field read-only class="pointer-events-none">
+            <math-field read-only class="pointer-events-none bg-gray-50">
                 \\text{2. Rewrite the expression for a summation: } \\sum_{i=1}^{n} a_i
             </math-field>
         </div>
          <div class="p-2">
-            <math-field read-only class="pointer-events-none">
+            <math-field read-only class="pointer-events-none bg-gray-50">
                 \\text{3. Use the table button to write a simple 2x2 truth table for } p \\land q.
             </math-field>
         </div>
@@ -199,7 +199,7 @@ function renderInstructions() {
     </div>
     <math-field 
         id="${trialTargetId}" 
-        class="w-full p-2 text-lg bg-white border border-gray-300 rounded" 
+        class="w-full p-2 text-lg border border-gray-300 rounded" 
         default-mode="text" 
         virtual-keyboard-mode="manual"
         placeholder="\\text{Try rewriting the expressions here...}">
@@ -221,13 +221,11 @@ function renderInstructions() {
       10
     );
 
-    // Initialize/reset the answers array based on the chosen quiz's number of questions.
     answers = quizSet[selectedQuizIndex].questions.map(() => "");
 
     document.getElementById("instructions-container").style.display = "none";
     document.getElementById("quiz-wrapper").classList.remove("hidden");
 
-    // Render the quiz page with the user's selected version.
     renderQuizPage(selectedQuizIndex);
   });
 }

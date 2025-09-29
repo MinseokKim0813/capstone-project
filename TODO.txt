@@ -5,11 +5,11 @@
 // - Give example to let them toggle between text and math mode
 // - Check if I can make it 2 lines default so simple enter works
 // Remove all the options except inserts, color, background
-
-// 2. Let the user choose the version in tutorial page, not randomly assign.
 // 6. make "Table" button "Table Entry" and make it 1 by 1
 
+
 // DONE
+// 2. Let the user choose the version in tutorial page, not randomly assign.
 // 3. Adjust the formatting symbols as necessary as well.
 // 10. Milestone table
 // 1. Add more sentences maybe like 2 more sentences for the tutorial. Make them use all the symbols and formattings. No questions, but simply make them rewrite the sentences.
