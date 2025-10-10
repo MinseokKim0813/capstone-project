@@ -1,4 +1,3 @@
 // TODO:
 // 1. fix: when pressing enter, it becomes math mode
-// 3. hide keyboard button
 // 4. match the overleaf questions with interface
