@@ -1,3 +1,5 @@
+// 2. Add instruction on using menu button (there are more options on menu button but you will most likely not need it)
+
 // --- THEME AND GLOBAL SETUP ---
 document.body.style.backgroundColor = "#e0e0e0";
 document.body.style.color = "black";
@@ -113,10 +115,10 @@ function renderInstructions() {
       <p class="mb-4 text-gray-600">This is an interface for mathematical writing. Please follow these instructions:</p>
       <ul class="list-decimal list-inside mb-6 space-y-3 text-gray-700">
         <li>Type your solution in the text box. You can mix regular text and mathematical formulas.</li>
-        <li>To write math, click the <strong>Text/Math toggle switch</strong>. When it's blue, you are in Math mode.
-        </li>
+        <li>To write math, click the <strong>Text/Math toggle switch</strong>. When it's blue, you are in Math mode.</li>
         <li>To create a new line in your answer, simply press the <strong>Enter</strong> key.</li>
         <li>Use the symbol and layout buttons to insert complex structures like tables or operators.</li>
+        <li>You can access more options by right-clicking on the input area or clicking on the menu button at the right end to bring up a menu, but you will likely not need these advanced features.</li>
       </ul>
       <hr class="my-6">
       <h2 class="text-2xl font-semibold mb-4">Practice Area</h2>
@@ -162,7 +164,6 @@ function renderInstructions() {
     symbols
       .map((symbol) => {
         if (symbol === "table") {
-          // --- MODIFIED LINE ---
           return `<button data-target="${trialTargetId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm table-icon-button"><div class="table-icon-grid"><div></div><div></div><div></div><div></div></div></button>`;
         }
         const latex = latexMap[symbol] || symbol;
@@ -299,7 +300,6 @@ function attachEventListenersForBlock(blockId, saveCallback) {
         if (toggle && !toggle.checked) toggle.checked = true;
 
         if (type === "table") {
-          // --- NEW LOGIC: Show the custom table picker UI ---
           showTablePicker(event.currentTarget, mf);
         } else if (symbol.includes("overline")) {
           mf.insert("\\overline{#0}");
@@ -325,14 +325,12 @@ function attachEventListenersForBlock(blockId, saveCallback) {
  * @param {MathfieldElement} mf - The mathfield to insert the table into.
  */
 function showTablePicker(button, mf) {
-  // If a picker already exists, remove it.
   const oldPicker = document.querySelector(".table-picker");
   if (oldPicker) {
     oldPicker.remove();
-    return; // Stop if we just closed an existing picker
+    return;
   }
 
-  // 1. Create the picker elements
   const picker = document.createElement("div");
   picker.className = "table-picker";
 
@@ -343,7 +341,6 @@ function showTablePicker(button, mf) {
   const MAX_ROWS = 5;
   const MAX_COLS = 5;
 
-  // Create the grid of cells
   const allCells = [];
   for (let r = 1; r <= MAX_ROWS; r++) {
     for (let c = 1; c <= MAX_COLS; c++) {
@@ -357,7 +354,6 @@ function showTablePicker(button, mf) {
     }
   }
 
-  // 2. Add event listeners for hover and click
   allCells.forEach((cell) => {
     cell.addEventListener("mouseover", (event) => {
       const currentRows = parseInt(event.currentTarget.dataset.rows);
@@ -390,17 +386,13 @@ function showTablePicker(button, mf) {
     });
   });
 
-  // 3. Position and display the picker
   document.body.appendChild(picker);
   const btnRect = button.getBoundingClientRect();
   const pickerHeight = picker.offsetHeight;
 
-  // --- THIS IS THE CORRECTED LOGIC ---
-  // Position the picker above the button, accounting for page scroll.
   picker.style.left = `${btnRect.left + window.scrollX}px`;
   picker.style.top = `${btnRect.top + window.scrollY - pickerHeight - 5}px`;
 
-  // 4. Add a listener to close the picker when clicking outside
   setTimeout(() => {
     document.addEventListener("click", function closePicker(e) {
       if (!picker.contains(e.target) && !button.contains(e.target)) {
@@ -438,7 +430,6 @@ function renderQuizPage(quizIdx) {
       symbols
         .map((symbol) => {
           if (symbol === "table") {
-            // --- MODIFIED LINE ---
             return `<button data-target="${blockId}" data-type="table" class="px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded insert-btn text-sm table-icon-button"><div class="table-icon-grid"><div></div><div></div><div></div><div></div></div></button>`;
           }
           const latex = latexMap[symbol] || symbol;
