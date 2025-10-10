@@ -1,3 +1,8 @@
+/* Rule to hide the virtual keyboard toggle */
+math-field::part(virtual-keyboard-toggle) {
+  display: none;
+}
+
 /*
   A3 Landscape Dimensions: 42.0cm x 29.7cm
 */

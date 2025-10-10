@@ -1,5 +1,3 @@
-// 2. Add instruction on using menu button (there are more options on menu button but you will most likely not need it)
-
 // --- THEME AND GLOBAL SETUP ---
 document.body.style.backgroundColor = "#e0e0e0";
 document.body.style.color = "black";
