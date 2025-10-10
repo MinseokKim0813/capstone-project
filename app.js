@@ -35,13 +35,14 @@ const quizSet = [
     questions: [
       {
         question:
-          "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq", "overline"],
+          "\\text{Show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$, first using truth table, and then using logical equivalencies.}",
+        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"],
       },
       {
         question:
-          "\\text{Prove or disprove: $\\overline{A - B} = \\overline{A} \\cup \\overline{B}$}",
+          "\\text{Prove or disprove: For any sets $A$ and $B$, $\\overline{A - B} = \\overline{A} \\cup \\overline{B}$}",
         symbols: [
+          "\\forall",
           "\\in",
           "\\mid",
           "\\land",
@@ -82,8 +83,8 @@ const quizSet = [
     questions: [
       {
         question:
-          "\\text{Use a truth table to show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$.}",
-        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"],
+          "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
+        symbols: ["\\cdot", "\\neq", "overline"],
       },
       {
         question:
@@ -317,6 +318,7 @@ function attachEventListenersForBlock(blockId, saveCallback) {
       });
     });
 }
+
 /**
  * Creates and displays a grid UI for selecting table dimensions.
  * @param {HTMLElement} button - The button that was clicked to trigger the picker.

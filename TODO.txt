@@ -1,12 +1,5 @@
 // TODO:
 // 1. fix: when pressing enter, it becomes math mode
-
-// DONE
-// 2. table button icon squares
-// 6. insert table adjustable
-// 6. Hide copy/paste options in the menu
-// Remove all the options except inserts, color, background
-// 2. Let the user choose the version in tutorial page, not randomly assign.
-// 3. Adjust the formatting symbols as necessary as well.
-// 10. Milestone table
-// 1. Add more sentences maybe like 2 more sentences for the tutorial. Make them use all the symbols and formattings. No questions, but simply make them rewrite the sentences.
+// 2. Add instruction on using menu button (there are more options on menu button but you will most likely not need it)
+// 3. hide keyboard button
+// 4. match the overleaf questions with interface
