@@ -4,7 +4,6 @@ document.body.style.color = "black";
 
 // Generates a unique user ID for the session
 const userId = "user-" + Math.random().toString(36).substring(2, 9);
-// Quiz index is now selected by the user, not randomly assigned here.
 
 const latexMap = {
   "→": "\\rightarrow",
@@ -29,78 +28,63 @@ const latexMap = {
 const operatorKeywords = ["overline", "^", "_", "\\sum", "\\prod", "table"];
 
 // --- DATA STRUCTURE: QUIZ-BASED ---
-const quizSet = [
-  {
-    title: "Math Quiz (Version 1)",
-    questions: [
-      {
-        question:
-          "\\text{Show that $\\neg p \\lor (p \\land \\neg q) \\to q \\equiv (p \\land q) \\lor q$, first using truth table, and then using logical equivalencies.}",
-        symbols: ["\\neg", "\\lor", "\\land", "\\to", "table"],
-      },
-      {
-        question:
-          "\\text{Prove or disprove: For any sets $A$ and $B$, $\\overline{A - B} = \\overline{A} \\cup \\overline{B}$}",
-        symbols: [
-          "\\forall",
-          "\\in",
-          "\\mid",
-          "\\land",
-          "\\neg",
-          "\\lor",
-          "\\cup",
-          "\\ne",
-          "overline",
-        ],
-      },
-    ],
-  },
-  {
-    title: "Math Quiz (Version 2)",
-    questions: [
-      {
-        question:
-          "\\text{Is it true that $\\overline{\\overline{x \\cdot y} + \\overline{x + z}} = x \\cdot (y + z)$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq", "overline"],
-      },
-      {
-        question:
-          "\\text{Prove that $A \\cap (B - C) = (A \\cap B) - (A \\cap C)$}}",
-        symbols: [
-          "\\cap",
-          "\\in",
-          "\\iff",
-          "\\land",
-          "\\neg",
-          "\\lor",
-          "\\Rightarrow",
-        ],
-      },
-    ],
-  },
-  {
-    title: "Math Quiz (Version 3)",
-    questions: [
-      {
-        question:
-          "\\text{Is it true that $\\overline{\\overline{x+y}+z} = \\overline{x + \\overline{y+z}}$? Justify clearly.}",
-        symbols: ["\\cdot", "\\neq", "overline"],
-      },
-      {
-        question:
-          "\\text{Prove the following old rule: An integer is divisible by 3 if and only if the sum of its digits is divisible by 3.}",
-        symbols: ["\\cdot", "\\leq", "\\equiv", "\\sum", "^", "_"],
-      },
-    ],
-  },
-];
+// MODIFIED: quizSet is now declared as an empty array and will be populated from the TXT file.
+let quizSet = [];
 
 // --- STATE MANAGEMENT ---
 const mainAppContainer = document.getElementById("questions");
-// Answers array is now initialized after the user chooses a quiz version.
-let answers = [];
+let answers = []; // Answers array is initialized after the user chooses a quiz version.
 
 // --- FUNCTIONS ---
+
+/**
+ * ADDED: Fetches and parses the quiz data from a local TXT file.
+ * @param {string} filePath - The path to the quizzes.txt file.
+ * @returns {Promise<Array>} A promise that resolves to the structured quizSet array.
+ */
+async function loadAndParseQuizzes(filePath) {
+  try {
+    const response = await fetch(filePath);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const text = await response.text();
+    const lines = text.split("\n");
+
+    const parsedQuizzes = [];
+    let currentQuiz = null;
+
+    for (const line of lines) {
+      const trimmedLine = line.trim();
+      if (!trimmedLine) continue; // Skip empty lines
+
+      if (trimmedLine.startsWith("QUIZ:")) {
+        const title = trimmedLine.substring(6).trim();
+        currentQuiz = { title: title, questions: [] };
+        parsedQuizzes.push(currentQuiz);
+      } else if (currentQuiz) {
+        // Use a regex to split only on the first colon, in case the question contains colons
+        const parts = trimmedLine.split(/\s:(.*)/s);
+        if (parts.length >= 2) {
+          const question = parts[0].trim();
+          const symbolsString = parts[1].trim();
+          const symbols = symbolsString.split(",").map((s) => s.trim());
+
+          currentQuiz.questions.push({ question, symbols });
+        }
+      }
+    }
+    return parsedQuizzes;
+  } catch (error) {
+    console.error("Failed to load or parse quiz file:", error);
+    mainAppContainer.innerHTML = `<div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+      <strong class="font-bold">Error:</strong>
+      <span class="block sm:inline">Could not load quizzes from <code>quizzes.txt</code>. Please ensure the file exists and is accessible.</span>
+    </div>`;
+    return []; // Return empty array on failure
+  }
+}
+
 function renderInstructions() {
   // Dynamically generate the dropdown options from the quizSet data.
   const quizOptions = quizSet
@@ -246,19 +230,31 @@ function renderInstructions() {
 
   attachEventListenersForBlock(trialTargetId);
 
-  document.getElementById("start-quiz-btn").addEventListener("click", () => {
-    const selectedQuizIndex = parseInt(
-      document.getElementById("quiz-version-select").value,
-      10
-    );
+  // Guard against case where no quizzes were loaded
+  if (quizSet.length > 0) {
+    document.getElementById("start-quiz-btn").addEventListener("click", () => {
+      const selectedQuizIndex = parseInt(
+        document.getElementById("quiz-version-select").value,
+        10
+      );
 
-    answers = quizSet[selectedQuizIndex].questions.map(() => "");
+      answers = quizSet[selectedQuizIndex].questions.map(() => "");
 
-    document.getElementById("instructions-container").style.display = "none";
-    document.getElementById("quiz-wrapper").classList.remove("hidden");
+      document.getElementById("instructions-container").style.display = "none";
+      document.getElementById("quiz-wrapper").classList.remove("hidden");
 
-    renderQuizPage(selectedQuizIndex);
-  });
+      renderQuizPage(selectedQuizIndex);
+    });
+  } else {
+    document.getElementById("start-quiz-btn").disabled = true;
+    document.getElementById("start-quiz-btn").textContent = "No Quizzes Found";
+    document
+      .getElementById("start-quiz-btn")
+      .classList.remove("bg-green-600", "hover:bg-green-700");
+    document
+      .getElementById("start-quiz-btn")
+      .classList.add("bg-gray-400", "cursor-not-allowed");
+  }
 }
 
 function attachEventListenersForBlock(blockId, saveCallback) {
@@ -509,4 +505,14 @@ function renderQuizPage(quizIdx) {
 }
 
 // --- INITIALIZATION ---
-renderInstructions();
+/**
+ * ADDED: Main async function to orchestrate the application startup.
+ * It first loads the quizzes, then renders the initial page.
+ */
+async function main() {
+  quizSet = await loadAndParseQuizzes("quizzes.txt");
+  renderInstructions();
+}
+
+// MODIFIED: The script now starts by calling the main async function.
+main();

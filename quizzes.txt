@@ -1,0 +1,11 @@
+QUIZ: Math Quiz (Version 1)
+\text{Show that $\neg p \lor (p \land \neg q) \to q \equiv (p \land q) \lor q$, first using truth table, and then using logical equivalencies.} : \neg,\lor,\land,\to,table
+\text{Prove or disprove: For any sets $A$ and $B$, $\overline{A - B} = \overline{A} \cup \overline{B}$} : \forall,\in,\mid,\land,\neg,\lor,\cup,\ne,overline
+
+QUIZ: Math Quiz (Version 2)
+\text{Is it true that $\overline{\overline{x \cdot y} + \overline{x + z}} = x \cdot (y + z)$? Justify clearly.} : \cdot,\neq,overline
+\text{Prove that $A \cap (B - C) = (A \cap B) - (A \cap C)$} : \cap,\in,\iff,\land,\neg,\lor,\Rightarrow
+
+QUIZ: Math Quiz (Version 3)
+\text{Is it true that $\overline{\overline{x+y}+z} = \overline{x + \overline{y+z}}$? Justify clearly.} : \cdot,\neq,overline
+\text{Prove the following old rule: An integer is divisible by 3 if and only if the sum of its digits is divisible by 3.} : \cdot,\leq,\equiv,\sum,^,_
