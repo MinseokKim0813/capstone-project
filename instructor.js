@@ -1,6 +1,18 @@
-// --- MOCK AI AND SYMBOL DATABASE ---
+// --- API CONFIGURATION ---
 
-// This list represents all possible symbols the "AI" knows about.
+/**
+ * ⚠️ PASTE YOUR GEMINI API KEY HERE ⚠️
+ * You can get one from Google AI Studio: https://aistudio.google.com/app/apikey
+ */
+const GEMINI_API_KEY = "AIzaSyAjmXOKWLWNz2uRnrXRcgZgWH1Ha2CEuCg";
+
+// We'll use a fast and capable model for this task.
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+
+// --- SYMBOL DATABASE (Used for the AI's prompt) ---
+
+// This list represents all possible symbols the AI should recognize.
 const AI_SYMBOL_DATABASE = [
   "\\rightarrow",
   "\\vee",
@@ -81,42 +93,118 @@ const AI_SYMBOL_DATABASE = [
 ];
 
 /**
- * Simulates an AI call to extract relevant symbols from a LaTeX string.
- * In a real application, this would be a fetch call to a server-side AI model.
+ * Calls the Gemini API to extract relevant symbols from a LaTeX string.
  * @param {string} latexString The question text written in LaTeX.
  * @returns {Promise<string[]>} A promise that resolves to an array of suggested symbols.
  */
-function getAiSymbolSuggestions(latexString) {
-  console.log("AI analyzing:", latexString);
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      const suggestions = new Set();
-      // Simple regex to find LaTeX commands (e.g., \command)
-      const commands = latexString.match(/\\([a-zA-Z]+)/g) || [];
+async function getAiSymbolSuggestions(latexString) {
+  console.log("Contacting Gemini AI for:", latexString);
 
-      commands.forEach((cmd) => {
-        // Check if the found command is in our database
-        if (AI_SYMBOL_DATABASE.includes(cmd)) {
-          suggestions.add(cmd);
-        }
-      });
+  if (!GEMINI_API_KEY) {
+    alert("Please set your GEMINI_API_KEY at the top of the script.");
+    console.error("Missing Gemini API Key");
+    return []; // Return empty array to prevent further errors
+  }
 
-      // Check for single-character symbols and keywords
-      AI_SYMBOL_DATABASE.forEach((symbol) => {
-        // Use a regex to avoid matching parts of words (e.g., finding '\in' inside '\sin')
-        const symbolRegex = new RegExp(
-          `(?<!\\\\)${symbol.replace(/\\/g, "\\\\")}(?!\\w)`,
-          "g"
-        );
-        if (latexString.match(symbolRegex)) {
-          suggestions.add(symbol);
-        }
-      });
+  // This prompt instructs the AI to act as an extractor and only return
+  // symbols from our database, in a specific JSON format.
+  const prompt = `
+    Analyze the following LaTeX text and extract all unique mathematical symbols 
+    that are present in the provided valid symbol list.
 
-      console.log("AI suggestions:", [...suggestions]);
-      resolve([...suggestions]);
-    }, 500); // Simulate network delay
-  });
+    RULES:
+    1.  Only return symbols that are present in the "VALID SYMBOL LIST".
+    2.  Return your answer *only* as a valid JSON array of strings.
+    3.  Do not include any other text, explanations, or markdown (like \`\`\`json).
+    4.  If no valid symbols are found, return an empty array [].
+
+    --- VALID SYMBOL LIST ---
+    ${AI_SYMBOL_DATABASE.join("\n")}
+    --- END OF LIST ---
+
+    --- EXAMPLE ---
+    User Input: "Prove that $\\neg (A \\land B) \\equiv (\\neg A) \\vee (\\neg B)$ for all $A, B$."
+    Your Response:
+    ["\\neg", "\\land", "\\equiv", "\\vee", "\\forall"]
+    --- END OF EXAMPLE ---
+
+    --- USER INPUT ---
+    ${latexString}
+    --- END OF USER INPUT ---
+
+    Your Response:
+  `;
+
+  try {
+    const response = await fetch(GEMINI_API_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: {
+          // Force the model to output JSON
+          responseMimeType: "application/json",
+          temperature: 0.0, // We want deterministic output
+        },
+      }),
+    });
+
+    if (!response.ok) {
+      const errorBody = await response.text();
+      throw new Error(
+        `API request failed with status ${response.status}: ${errorBody}`
+      );
+    }
+
+    const data = await response.json();
+
+    if (
+      !data.candidates ||
+      !data.candidates[0] ||
+      !data.candidates[0].content
+    ) {
+      throw new Error("Invalid API response structure.");
+    }
+
+    // The model's response is a JSON *string*, which we must parse
+    const jsonText = data.candidates[0].content.parts[0].text;
+    console.log("Raw AI response:", jsonText);
+
+    // --- ROBUSTNESS FIX ---
+    // Find the first block of text that starts with [ and ends with ]
+    // The 's' flag lets '.' match newlines, in case the array is multi-line
+    const match = jsonText.match(/\[.*?\]/s);
+
+    if (!match || !match[0]) {
+      console.error("AI did not return a valid JSON array string:", jsonText);
+      throw new Error("AI response was not in the expected format.");
+    }
+
+    // Now, we parse *only* the matched array string, not the whole text
+    const cleanedJsonText = match[0];
+    const suggestions = JSON.parse(cleanedJsonText);
+    // --- END OF FIX ---
+
+    if (!Array.isArray(suggestions)) {
+      throw new Error("AI response was not a valid JSON array.");
+    }
+
+    // Final filter to be 100% sure we only have symbols from our database
+    const validSuggestions = suggestions.filter((s) =>
+      AI_SYMBOL_DATABASE.includes(s)
+    );
+
+    console.log("AI suggestions:", validSuggestions);
+    return [...new Set(validSuggestions)]; // Return unique symbols
+  } catch (error) {
+    console.error("Error calling Gemini API:", error);
+    alert(
+      `An error occurred while generating symbols: ${error.message}\n\nCheck the console for more details. (Did you set your API key?)`
+    );
+    return []; // Return an empty array on failure
+  }
 }
 
 // --- DOM ELEMENTS AND STATE ---
@@ -211,6 +299,8 @@ function addQuestionToQuiz(quizId) {
       return;
     }
 
+    // Disable button to prevent multiple clicks
+    getSymbolsBtn.disabled = true;
     symbolsDisplay.innerHTML =
       '<div class="loader"></div> <span class="text-gray-600 ml-2">Analyzing...</span>';
 
@@ -218,6 +308,9 @@ function addQuestionToQuiz(quizId) {
 
     symbolsInput.value = suggestions.join(",");
     renderSymbols(symbolsDisplay, symbolsInput);
+
+    // Re-enable button
+    getSymbolsBtn.disabled = false;
   });
 }
 
@@ -236,6 +329,7 @@ function renderSymbols(displayEl, inputEl) {
   }
 
   symbols.forEach((symbol) => {
+    if (!symbol) return; // Handle potential empty strings from split
     const tag = document.createElement("span");
     tag.className = "symbol-tag";
     tag.textContent = symbol;
