@@ -271,6 +271,30 @@ function attachEventListenersForBlock(blockId, saveCallback) {
     mf.addEventListener("input", () => saveCallback(mf.value));
   }
 
+  // --- ADD THIS NEW LISTENER ---
+  // This separately "listens" for an Enter key press
+  // without interfering with the library's internal keybindings.
+  mf.addEventListener("keydown", (event) => {
+    if (event.key === "Enter" || event.key === "Return") {
+      // Find the toggle associated with this math-field
+      const toggle = document.querySelector(
+        `input[data-toggle-target="${blockId}"]`
+      );
+
+      // Use a 0ms timeout. This tells the browser:
+      // "Let the math-field library finish handling the 'Enter' key first.
+      // AFTER it's done (and has switched to math mode), then run this code."
+      setTimeout(() => {
+        if (toggle) {
+          // By now, the library has run 'addRowAfter',
+          // so we just sync our slider to be 'on'.
+          toggle.checked = true;
+        }
+      }, 0);
+    }
+  });
+  // --- END OF NEW LISTENER ---
+
   const toggle = document.querySelector(
     `input[data-toggle-target="${blockId}"]`
   );
