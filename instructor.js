@@ -1,13 +1,10 @@
 // --- API CONFIGURATION ---
 
-/**
- * ⚠️ PASTE YOUR GEMINI API KEY HERE ⚠️
- * You can get one from Google AI Studio: https://aistudio.google.com/app/apikey
- */
-const GEMINI_API_KEY = "AIzaSyAjmXOKWLWNz2uRnrXRcgZgWH1Ha2CEuCg";
+
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 
 // We'll use a fast and capable model for this task.
-const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_MODEL = "gemini-2.5-pro";
 const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // --- SYMBOL DATABASE (Used for the AI's prompt) ---
