@@ -222,6 +222,7 @@ function renderInstructions() {
   `;
 
   const trialMf = document.getElementById(trialTargetId);
+  trialMf.executeCommand(["switchMode", "text"]);
   trialMf.keybindings = [
     { key: "[Enter]", command: "addRowAfter" },
     { key: "[Return]", command: "addRowAfter" },
@@ -506,6 +507,7 @@ function renderQuizPage(quizIdx) {
     container.appendChild(block);
 
     const inputField = document.getElementById(blockId);
+    inputField.executeCommand(["switchMode", "text"]);
     inputField.value = answers[questionIdx] || "";
     inputField.keybindings = [
       { key: "[Enter]", command: "addRowAfter" },
