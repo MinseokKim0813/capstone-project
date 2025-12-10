@@ -1,7 +1,6 @@
 // --- API CONFIGURATION ---
 
-
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+import { GEMINI_API_KEY } from "./config.js";
 
 // We'll use a fast and capable model for this task.
 const GEMINI_MODEL = "gemini-2.5-pro";
@@ -106,14 +105,19 @@ async function getAiSymbolSuggestions(latexString) {
   // This prompt instructs the AI to act as an extractor and only return
   // symbols from our database, in a specific JSON format.
   const prompt = `
-    Analyze the following LaTeX text and extract all unique mathematical symbols 
+    You are a JSON-only response generator. Your output must be valid JSON and nothing else.
+
+    TASK: Analyze the following LaTeX text and extract all unique mathematical symbols 
     that are present in the provided valid symbol list.
 
-    RULES:
-    1.  Only return symbols that are present in the "VALID SYMBOL LIST".
-    2.  Return your answer *only* as a valid JSON array of strings.
-    3.  Do not include any other text, explanations, or markdown (like \`\`\`json).
-    4.  If no valid symbols are found, return an empty array [].
+    CRITICAL RULES:
+    1.  Your response MUST be a valid JSON array of strings ONLY.
+    2.  Do NOT include any text before or after the JSON array.
+    3.  Do NOT include markdown code blocks (no \`\`\`json or \`\`\`).
+    4.  Do NOT include explanations, comments, or any other text.
+    5.  Only return symbols that are present in the "VALID SYMBOL LIST".
+    6.  If no valid symbols are found, return an empty array: []
+    7.  Start your response directly with [ and end with ].
 
     --- VALID SYMBOL LIST ---
     ${AI_SYMBOL_DATABASE.join("\n")}
@@ -121,7 +125,7 @@ async function getAiSymbolSuggestions(latexString) {
 
     --- EXAMPLE ---
     User Input: "Prove that $\\neg (A \\land B) \\equiv (\\neg A) \\vee (\\neg B)$ for all $A, B$."
-    Your Response:
+    Your Response (JSON only, no other text):
     ["\\neg", "\\land", "\\equiv", "\\vee", "\\forall"]
     --- END OF EXAMPLE ---
 
@@ -129,7 +133,7 @@ async function getAiSymbolSuggestions(latexString) {
     ${latexString}
     --- END OF USER INPUT ---
 
-    Your Response:
+    Your Response (JSON array only, no other text):
   `;
 
   try {
@@ -160,8 +164,11 @@ async function getAiSymbolSuggestions(latexString) {
     if (
       !data.candidates ||
       !data.candidates[0] ||
-      !data.candidates[0].content
+      !data.candidates[0].content ||
+      !data.candidates[0].content.parts ||
+      !data.candidates[0].content.parts[0]
     ) {
+      console.error("Invalid API response structure:", data);
       throw new Error("Invalid API response structure.");
     }
 
@@ -169,22 +176,75 @@ async function getAiSymbolSuggestions(latexString) {
     const jsonText = data.candidates[0].content.parts[0].text;
     console.log("Raw AI response:", jsonText);
 
-    // --- ROBUSTNESS FIX ---
-    // Find the first block of text that starts with [ and ends with ]
-    // The 's' flag lets '.' match newlines, in case the array is multi-line
-    const match = jsonText.match(/\[.*?\]/s);
-
-    if (!match || !match[0]) {
-      console.error("AI did not return a valid JSON array string:", jsonText);
+    // Check if jsonText exists and is a string
+    if (!jsonText || typeof jsonText !== "string") {
+      console.error("AI response text is missing or invalid:", jsonText);
       throw new Error("AI response was not in the expected format.");
     }
 
-    // Now, we parse *only* the matched array string, not the whole text
-    const cleanedJsonText = match[0];
-    const suggestions = JSON.parse(cleanedJsonText);
+    // --- ROBUSTNESS FIX ---
+    // Helper function to fix unescaped backslashes in JSON strings
+    // This handles cases where LaTeX commands like \neg, \land have unescaped backslashes
+    function fixJsonBackslashes(jsonString) {
+      // Replace backslashes that aren't part of valid JSON escape sequences
+      // Valid escapes: \\, \", \/, \b, \f, \n, \r, \t, \uXXXX
+      // We need to escape backslashes that are followed by letters (LaTeX commands)
+      return jsonString.replace(/\\(?![\\"\/bfnrtu])/g, "\\\\");
+    }
+
+    // Try to parse the entire text first (in case it's already clean JSON)
+    let suggestions;
+    let cleanedJsonText = jsonText.trim();
+
+    try {
+      // First, try parsing the entire text as-is
+      suggestions = JSON.parse(cleanedJsonText);
+    } catch (firstError) {
+      // If that fails, try fixing backslashes and parsing again
+      try {
+        const fixedJson = fixJsonBackslashes(cleanedJsonText);
+        suggestions = JSON.parse(fixedJson);
+      } catch (secondError) {
+        // If that still fails, try to extract JSON array using regex
+        // Use a more robust regex that handles nested structures better
+        // Match from first [ to last ] (greedy match to handle nested arrays)
+        const match = cleanedJsonText.match(/\[[\s\S]*\]/);
+
+        if (!match || !match[0]) {
+          console.error(
+            "AI did not return a valid JSON array string:",
+            cleanedJsonText
+          );
+          throw new Error("AI response was not in the expected format.");
+        }
+
+        cleanedJsonText = match[0];
+        try {
+          // Try parsing the extracted JSON as-is
+          suggestions = JSON.parse(cleanedJsonText);
+        } catch (thirdError) {
+          // Last resort: fix backslashes in the extracted JSON
+          const fixedExtracted = fixJsonBackslashes(cleanedJsonText);
+          try {
+            suggestions = JSON.parse(fixedExtracted);
+          } catch (parseError) {
+            console.error(
+              "Failed to parse JSON after all attempts:",
+              parseError,
+              "Original text:",
+              jsonText,
+              "Fixed text:",
+              fixedExtracted
+            );
+            throw new Error("Failed to parse AI response as JSON.");
+          }
+        }
+      }
+    }
     // --- END OF FIX ---
 
     if (!Array.isArray(suggestions)) {
+      console.error("Parsed response is not an array:", suggestions);
       throw new Error("AI response was not a valid JSON array.");
     }
 

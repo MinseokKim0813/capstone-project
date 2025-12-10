@@ -3,6 +3,6 @@
 // 2. Sometimes user can enter space in mathmode, and when that happens it automatically switches to text mode without the slider update
 // 3. When hovering over a symbol, show the english description of that symbol (e.g. < greater than)
 // 4. Make the table button to support more than 5x5
-// 5. Why mathfield starts with mathmode?
 6. Text mode selects the text automatically
 7. For certain models (computers) I think the save pdf button is not working.
+8. Expand table, insert table more than 5x5
