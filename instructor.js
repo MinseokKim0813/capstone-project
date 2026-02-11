@@ -291,6 +291,9 @@ function createQuizElement() {
         </div>
         <div class="questions-area space-y-4">
             </div>
+        <button class="save-quiz-btn w-full bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded-md transition-colors mb-2">
+            Save
+        </button>
         <button class="add-question-btn w-full bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-2 px-4 rounded-md transition-colors">
             + Add Question
         </button>
@@ -305,6 +308,9 @@ function createQuizElement() {
   quizContainer
     .querySelector(".remove-quiz-btn")
     .addEventListener("click", () => quizContainer.remove());
+  quizContainer
+    .querySelector(".save-quiz-btn")
+    .addEventListener("click", () => saveQuizFile());
 
   // Add one question by default
   addQuestionToQuiz(quizId);
@@ -330,7 +336,8 @@ function addQuestionToQuiz(quizId) {
             <button class="remove-question-btn text-red-500 hover:text-red-700 font-semibold ml-4 mt-6">&times;</button>
         </div>
         <div class="mt-3">
-            <button class="get-symbols-btn bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md">Generate Symbols (AI)</button>
+            <button class="get-symbols-btn bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md">Generate Tools</button>
+            <button class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md ml-2">Add Tools</button>
             <div id="${questionId}-symbols" class="symbols-display mt-2 p-2 bg-gray-50 rounded-md min-h-[40px]">
                 <span class="text-gray-500 text-sm">Click "Generate Symbols" to get AI suggestions.</span>
             </div>
@@ -427,6 +434,85 @@ function compileQuizFile() {
   });
 
   return fileContent.trim();
+}
+
+/**
+ * Shows a temporary message to the user.
+ * @param {string} message The message to display.
+ * @param {number} duration Duration in milliseconds (default: 3000).
+ */
+function showTemporaryMessage(message, duration = 3000) {
+  // Remove any existing message
+  const existingMessage = document.getElementById("temp-message");
+  if (existingMessage) {
+    existingMessage.remove();
+  }
+
+  // Create message element
+  const messageEl = document.createElement("div");
+  messageEl.id = "temp-message";
+  messageEl.className = "fixed top-4 right-4 bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-lg z-50 transition-opacity";
+  messageEl.textContent = message;
+  
+  document.body.appendChild(messageEl);
+
+  // Fade out and remove after duration
+  setTimeout(() => {
+    messageEl.style.opacity = "0";
+    messageEl.style.transition = "opacity 0.5s";
+    setTimeout(() => {
+      messageEl.remove();
+    }, 500);
+  }, duration);
+}
+
+/**
+ * Saves the quiz file to quizzes.txt using File System Access API or download fallback.
+ */
+async function saveQuizFile() {
+  const content = compileQuizFile();
+  if (!content) {
+    alert("No quizzes to save. Please add a quiz first.");
+    return;
+  }
+
+  try {
+    // Try to use File System Access API if available (Chrome/Edge)
+    if ('showSaveFilePicker' in window) {
+      const handle = await window.showSaveFilePicker({
+        suggestedName: 'quizzes.txt',
+        types: [{
+          description: 'Text files',
+          accept: { 'text/plain': ['.txt'] }
+        }]
+      });
+      
+      const writable = await handle.createWritable();
+      await writable.write(content);
+      await writable.close();
+      
+      showTemporaryMessage("Changes saved in file name quizzes.txt");
+    } else {
+      // Fallback: trigger download
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = "quizzes.txt";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+      
+      showTemporaryMessage("Changes saved in file name quizzes.txt");
+    }
+  } catch (error) {
+    // User cancelled the file picker or error occurred
+    if (error.name !== 'AbortError') {
+      console.error("Error saving file:", error);
+      alert("An error occurred while saving the file.");
+    }
+  }
 }
 
 /**
