@@ -27,8 +27,12 @@ jobs:
       # THIS STEP IS THE "BRIDGE"
       # It takes the secret and writes it into a file the browser can read
       - name: Create config.js
+        env:
+          # Bring the secret into a standard shell variable first
+          THE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          echo 'const config = { GEMINI_KEY: "'"${{ secrets.GEMINI_API_KEY }}"'" };' > config.js
+          # Use the variable safely
+          echo "const config = { GEMINI_KEY: '$THE_API_KEY' };" > config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
