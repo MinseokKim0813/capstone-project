@@ -286,7 +286,7 @@ function createQuizElement() {
   quizContainer.id = quizId;
   quizContainer.innerHTML = `
         <div class="flex justify-between items-center">
-            <input type="text" placeholder="Enter Quiz Title (e.g., Math Quiz Version ${quizCount})" class="quiz-title-input text-2xl font-bold border-b-2 border-gray-300 focus:border-blue-500 outline-none w-full pb-1">
+            <input type="text" placeholder="Title goes here" class="quiz-title-input text-2xl font-bold border-b-2 border-gray-300 focus:border-blue-500 outline-none w-full pb-1">
             <button class="remove-quiz-btn text-red-500 hover:text-red-700 font-bold text-2xl px-2">&times;</button>
         </div>
         <div class="questions-area space-y-4">
@@ -339,7 +339,6 @@ function addQuestionToQuiz(quizId) {
             <button class="get-symbols-btn bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md">Generate Tools</button>
             <button class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md ml-2">Add Tools</button>
             <div id="${questionId}-symbols" class="symbols-display mt-2 p-2 bg-gray-50 rounded-md min-h-[40px]">
-                <span class="text-gray-500 text-sm">Click "Generate Symbols" to get AI suggestions.</span>
             </div>
             <input type="hidden" id="${questionId}-symbols-input" class="symbols-hidden-input">
         </div>
@@ -451,9 +450,10 @@ function showTemporaryMessage(message, duration = 3000) {
   // Create message element
   const messageEl = document.createElement("div");
   messageEl.id = "temp-message";
-  messageEl.className = "fixed top-4 right-4 bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-lg z-50 transition-opacity";
+  messageEl.className =
+    "fixed top-4 right-4 bg-green-500 text-white font-semibold py-3 px-6 rounded-lg shadow-lg z-50 transition-opacity";
   messageEl.textContent = message;
-  
+
   document.body.appendChild(messageEl);
 
   // Fade out and remove after duration
@@ -478,19 +478,21 @@ async function saveQuizFile() {
 
   try {
     // Try to use File System Access API if available (Chrome/Edge)
-    if ('showSaveFilePicker' in window) {
+    if ("showSaveFilePicker" in window) {
       const handle = await window.showSaveFilePicker({
-        suggestedName: 'quizzes.txt',
-        types: [{
-          description: 'Text files',
-          accept: { 'text/plain': ['.txt'] }
-        }]
+        suggestedName: "quizzes.txt",
+        types: [
+          {
+            description: "Text files",
+            accept: { "text/plain": [".txt"] },
+          },
+        ],
       });
-      
+
       const writable = await handle.createWritable();
       await writable.write(content);
       await writable.close();
-      
+
       showTemporaryMessage("Changes saved in file name quizzes.txt");
     } else {
       // Fallback: trigger download
@@ -503,12 +505,12 @@ async function saveQuizFile() {
       link.click();
       document.body.removeChild(link);
       URL.revokeObjectURL(url);
-      
+
       showTemporaryMessage("Changes saved in file name quizzes.txt");
     }
   } catch (error) {
     // User cancelled the file picker or error occurred
-    if (error.name !== 'AbortError') {
+    if (error.name !== "AbortError") {
       console.error("Error saving file:", error);
       alert("An error occurred while saving the file.");
     }
