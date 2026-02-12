@@ -1,10 +1,19 @@
 // --- API CONFIGURATION ---
 
-import { GEMINI_API_KEY } from "./config.js";
+// Load config optionally so missing config.js or GEMINI_API_KEY doesn't throw
+let _cachedApiKey = undefined;
+async function getGeminiApiKey() {
+  if (_cachedApiKey !== undefined) return _cachedApiKey;
+  try {
+    const config = await import("./config.js");
+    _cachedApiKey = config.GEMINI_API_KEY || "";
+  } catch {
+    _cachedApiKey = "";
+  }
+  return _cachedApiKey;
+}
 
-// We'll use a fast and capable model for this task.
 const GEMINI_MODEL = "gemini-2.5-pro";
-const GEMINI_API_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 
 // --- SYMBOL DATABASE (Used for the AI's prompt) ---
 
@@ -94,13 +103,13 @@ const AI_SYMBOL_DATABASE = [
  * @returns {Promise<string[]>} A promise that resolves to an array of suggested symbols.
  */
 async function getAiSymbolSuggestions(latexString) {
-  console.log("Contacting Gemini AI for:", latexString);
-
-  if (!GEMINI_API_KEY) {
-    alert("Please set your GEMINI_API_KEY at the top of the script.");
-    console.error("Missing Gemini API Key");
-    return []; // Return empty array to prevent further errors
+  const apiKey = await getGeminiApiKey();
+  if (!apiKey) {
+    return [];
   }
+
+  console.log("Contacting Gemini AI for:", latexString);
+  const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`;
 
   // This prompt instructs the AI to act as an extractor and only return
   // symbols from our database, in a specific JSON format.
@@ -137,7 +146,7 @@ async function getAiSymbolSuggestions(latexString) {
   `;
 
   try {
-    const response = await fetch(GEMINI_API_URL, {
+    const response = await fetch(apiUrl, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
