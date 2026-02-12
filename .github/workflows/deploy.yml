@@ -27,14 +27,15 @@ jobs:
       # THIS STEP IS THE "BRIDGE"
       # It takes the secret and writes it into a file the browser can read
       - name: Create config.js
-        run: echo "const config = { GEMINI_KEY: '${{ secrets.GEMINI_API_KEY }}' };" > config.js
+        run: |
+          echo 'const config = { GEMINI_KEY: "'"${{ secrets.GEMINI_API_KEY }}"'" };' > config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: '.'
+          path: "."
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
