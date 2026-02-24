@@ -31,8 +31,8 @@ jobs:
           # Bring the secret into a standard shell variable first
           THE_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
-          # Use the variable safely
-          echo "const config = { GEMINI_KEY: '$THE_API_KEY' };" > config.js
+          # Generate an ES module that instructor.js can import
+          echo "export const GEMINI_API_KEY = '$THE_API_KEY';" > config.js
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
