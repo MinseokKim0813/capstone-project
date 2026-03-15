@@ -279,7 +279,44 @@ const quizBuilderArea = document.getElementById("quiz-builder-area");
 const addQuizBtn = document.getElementById("add-quiz-btn");
 const downloadBtn = document.getElementById("download-btn");
 
+/** @type {HTMLDivElement | null} */
+const addToolModal = document.getElementById("add-tool-modal");
+/** @type {HTMLInputElement | null} */
+const addToolInput = document.getElementById("add-tool-input");
+/** @type {((value: string | null) => void) | null} */
+let addToolResolve = null;
+
 let quizCount = 0;
+
+/**
+ * Shows a centered modal to enter a LaTeX symbol.
+ * @returns {Promise<string | null>} Resolves with the trimmed symbol, or null if cancelled.
+ */
+function showAddToolModal() {
+  return new Promise((resolve) => {
+    addToolResolve = resolve;
+    if (addToolModal && addToolInput) {
+      addToolModal.classList.remove("hidden");
+      addToolModal.classList.add("flex");
+      addToolInput.value = "";
+      addToolInput.focus();
+    } else {
+      resolve(null);
+    }
+  });
+}
+
+function hideAddToolModal(value = null) {
+  if (addToolModal) {
+    addToolModal.classList.add("hidden");
+    addToolModal.classList.remove("flex");
+  }
+  if (addToolInput) addToolInput.value = "";
+  if (addToolResolve) {
+    addToolResolve(value);
+    addToolResolve = null;
+  }
+}
 
 // --- CORE FUNCTIONS ---
 
@@ -385,9 +422,9 @@ function addQuestionToQuiz(quizId) {
     getSymbolsBtn.disabled = false;
   });
 
-  questionBlock.querySelector(".add-tools-btn").addEventListener("click", () => {
-    const tool = prompt("Enter a LaTeX symbol (e.g. \\neg, \\alpha, \\rightarrow):");
-    if (tool == null) return; // User cancelled
+  questionBlock.querySelector(".add-tools-btn").addEventListener("click", async () => {
+    const tool = await showAddToolModal();
+    if (tool == null || !tool) return;
     const trimmed = String(tool).trim();
     if (!trimmed) return;
     const current = symbolsInput.value ? symbolsInput.value.split(",").map((s) => s.trim()) : [];
@@ -565,6 +602,36 @@ function downloadQuizFile() {
 // --- INITIALIZATION ---
 addQuizBtn.addEventListener("click", createQuizElement);
 downloadBtn.addEventListener("click", downloadQuizFile);
+
+// Wire the Add Tool modal: Submit, Cancel, Enter, Escape, backdrop click
+const addToolSubmitBtn = document.getElementById("add-tool-submit");
+const addToolCancelBtn = document.getElementById("add-tool-cancel");
+if (addToolSubmitBtn && addToolInput) {
+  addToolSubmitBtn.addEventListener("click", () => {
+    const trimmed = addToolInput.value.trim();
+    hideAddToolModal(trimmed || null);
+  });
+}
+if (addToolCancelBtn) {
+  addToolCancelBtn.addEventListener("click", () => hideAddToolModal(null));
+}
+if (addToolInput) {
+  addToolInput.addEventListener("keydown", (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      const trimmed = addToolInput.value.trim();
+      hideAddToolModal(trimmed || null);
+    } else if (e.key === "Escape") {
+      e.preventDefault();
+      hideAddToolModal(null);
+    }
+  });
+}
+if (addToolModal) {
+  addToolModal.addEventListener("click", (e) => {
+    if (e.target === addToolModal) hideAddToolModal(null);
+  });
+}
 
 // Create the first quiz by default on page load
 createQuizElement();
