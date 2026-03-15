@@ -346,7 +346,7 @@ function addQuestionToQuiz(quizId) {
         </div>
         <div class="mt-3">
             <button class="get-symbols-btn bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md">Generate Tools</button>
-            <button class="bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md ml-2">Add Tools</button>
+            <button class="add-tools-btn bg-indigo-500 hover:bg-indigo-600 text-white text-sm font-bold py-1 px-3 rounded-md ml-2">Add Tools</button>
             <div id="${questionId}-symbols" class="symbols-display mt-2 p-2 bg-gray-50 rounded-md min-h-[40px]">
             </div>
             <input type="hidden" id="${questionId}-symbols-input" class="symbols-hidden-input">
@@ -383,6 +383,21 @@ function addQuestionToQuiz(quizId) {
 
     // Re-enable button
     getSymbolsBtn.disabled = false;
+  });
+
+  questionBlock.querySelector(".add-tools-btn").addEventListener("click", () => {
+    const tool = prompt("Enter a LaTeX symbol (e.g. \\neg, \\alpha, \\rightarrow):");
+    if (tool == null) return; // User cancelled
+    const trimmed = String(tool).trim();
+    if (!trimmed) return;
+    const current = symbolsInput.value ? symbolsInput.value.split(",").map((s) => s.trim()) : [];
+    if (current.includes(trimmed)) {
+      alert(`"${trimmed}" is already in the tools list.`);
+      return;
+    }
+    current.push(trimmed);
+    symbolsInput.value = current.join(",");
+    renderSymbols(symbolsDisplay, symbolsInput);
   });
 }
 
